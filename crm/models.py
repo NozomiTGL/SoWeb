@@ -1,6 +1,9 @@
 from django.db import models
 from django.contrib.auth.models import User
 
+from django.db import models
+from django.contrib.auth.models import User
+
 class Cliente(models.Model):
     ESTADO_CHOICES = [
         ('activo', 'Activo'),
@@ -13,6 +16,16 @@ class Cliente(models.Model):
         ('frecuente', 'Frecuente'),
         ('inactivo', 'Inactivo'),
     ]
+
+    # Campo nuevo: Vincula al cliente con el trabajador/vendedor responsable
+    vendedor = models.ForeignKey(
+        User, 
+        on_delete=models.SET_NULL, 
+        null=True, 
+        blank=True, 
+        related_name='clientes',
+        verbose_name="Vendedor asignado"
+    )
 
     nombre = models.CharField(max_length=150, verbose_name="Nombre del contacto")
     correo = models.EmailField(unique=True, verbose_name="Correo electrónico")

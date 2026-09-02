@@ -1,0 +1,93 @@
+{% extends 'crm/base.html' %}
+
+{% block content %}
+<!-- Encabezado -->
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <div>
+        <h2 class="fw-bold text-dark mb-0">Mi Actividad</h2>
+        <span class="text-muted small">Registro histórico de minutas e interacciones realizadas por ti</span>
+    </div>
+    <span class="badge bg-primary bg-opacity-10 text-primary px-3 py-2 rounded-pill fw-semibold">
+        <i class="bi bi-person-check-fill me-1"></i> {{ total_actividades }} registros encontrados
+    </span>
+</div>
+
+<!-- Tarjeta de Filtro por Rango de Fechas -->
+<div class="soweb-card p-4 mb-4">
+    <form method="get" class="row g-3 align-items-end">
+        <div class="col-md-5">
+            <label class="form-label small text-secondary fw-semibold">Desde</label>
+            <input type="date" name="fecha_inicio" value="{{ fecha_inicio }}" class="form-control bg-light">
+        </div>
+        <div class="col-md-5">
+            <label class="form-label small text-secondary fw-semibold">Hasta</label>
+            <input type="date" name="fecha_fin" value="{{ fecha_fin }}" class="form-control bg-light">
+        </div>
+        <div class="col-md-2 d-flex gap-2">
+            <button type="submit" class="btn btn-soweb-primary w-100" title="Filtrar">
+                <i class="bi bi-funnel-fill me-1"></i> Filtrar
+            </button>
+            {% if fecha_inicio or fecha_fin %}
+            <a href="{% url 'mi_actividad' %}" class="btn btn-soweb-outline" title="Limpiar Filtro">
+                <i class="bi bi-x-lg"></i>
+            </a>
+            {% endif %}
+        </div>
+    </form>
+</div>
+
+<!-- Tabla de Actividades -->
+<div class="soweb-card card overflow-hidden mb-5">
+    <div class="table-responsive">
+        <table class="table table-hover table-soweb align-middle mb-0">
+            <thead>
+                <tr>
+                    <th class="ps-4">Fecha y Hora</th>
+                    <th>Cliente / Empresa</th>
+                    <th>Tipo de Contacto</th>
+                    <th>Detalle de la Minuta</th>
+                    <th class="text-end pe-4">Acción</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for act in actividades %}
+                <tr>
+                    <td class="ps-4">
+                        <small class="text-dark fw-semibold d-block"><i class="bi bi-calendar3 me-1 text-primary"></i>{{ act.fecha|date:"d/m/Y" }}</small>
+                        <small class="text-muted">{{ act.fecha|date:"h:i A" }}</small>
+                    </td>
+                    <td>
+                        <a href="{% url 'detalle_cliente' act.cliente.pk %}" class="fw-bold text-dark text-decoration-none">
+                            {{ act.cliente.nombre }}
+                        </a>
+                        <small class="text-muted d-block">{{ act.cliente.empresa|default:"Particular" }}</small>
+                    </td>
+                    <td>
+                        <span class="badge bg-dark bg-opacity-10 text-dark rounded-pill px-3 py-1 text-capitalize fw-semibold small">
+                            {{ act.tipo }}
+                        </span>
+                    </td>
+                    <td>
+                        <span class="text-secondary small d-inline-block text-truncate" style="max-width: 350px;">
+                            {{ act.descripcion }}
+                        </span>
+                    </td>
+                    <td class="text-end pe-4">
+                        <a href="{% url 'historial_cliente' act.cliente.pk %}" class="btn btn-sm btn-soweb-outline" title="Ver en Historial">
+                            <i class="bi bi-arrow-right-short fs-5"></i>
+                        </a>
+                    </td>
+                </tr>
+                {% empty %}
+                <tr>
+                    <td colspan="5" class="text-center py-5 text-muted">
+                        <i class="bi bi-journal-x fs-1 opacity-50 d-block mb-2"></i>
+                        No se encontraron interacciones en el periodo seleccionado.
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+{% endblock %}

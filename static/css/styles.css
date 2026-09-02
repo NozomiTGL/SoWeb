@@ -1,0 +1,133 @@
+/* ==========================================
+   SoWeb CRM - Identidad Visual & Estilos
+   ========================================== */
+
+:root {
+    --soweb-primary: #4f46e5;
+    --soweb-primary-hover: #4338ca;
+    --soweb-gradient: linear-gradient(135deg, #4f46e5 0%, #7c3aed 100%);
+    --soweb-dark: #0f172a;
+    --soweb-bg: #f8fafc;
+    --soweb-card-bg: #ffffff;
+    --soweb-border: #e2e8f0;
+}
+
+body {
+    background-color: var(--soweb-bg);
+    font-family: system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+    color: #334155;
+}
+
+/* --- NAVBAR & BRANDING --- */
+.navbar-soweb {
+    background-color: var(--soweb-dark) !important;
+    box-shadow: 0 4px 20px rgba(15, 23, 42, 0.15);
+}
+
+.brand-badge {
+    background: var(--soweb-gradient);
+    color: white;
+    padding: 4px 12px;
+    border-radius: 20px;
+    font-size: 0.75rem;
+    font-weight: 700;
+    letter-spacing: 0.5px;
+}
+
+/* --- BOTONES --- */
+.btn-soweb-primary {
+    background: var(--soweb-gradient);
+    color: white !important;
+    border: none;
+    border-radius: 10px;
+    padding: 8px 18px;
+    font-weight: 600;
+    transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+
+.btn-soweb-primary:hover {
+    transform: translateY(-1px);
+    box-shadow: 0 8px 16px -3px rgba(79, 70, 229, 0.35);
+}
+
+.btn-soweb-outline {
+    border: 1.5px solid var(--soweb-border);
+    background: transparent;
+    color: #475569;
+    border-radius: 10px;
+    font-weight: 500;
+    transition: all 0.2s ease;
+}
+
+.btn-soweb-outline:hover {
+    background-color: #f1f5f9;
+    color: var(--soweb-dark);
+}
+
+/* --- TARJETAS --- */
+.soweb-card {
+    border: none;
+    border-radius: 16px;
+    background: var(--soweb-card-bg);
+    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.03);
+    transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+
+.soweb-card:hover {
+    box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.07);
+}
+
+.custom-card-header {
+    background-color: transparent;
+    border-bottom: 1px solid #f1f5f9;
+    padding: 1.25rem 1.5rem;
+}
+
+.icon-box {
+    width: 48px;
+    height: 48px;
+    border-radius: 12px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.25rem;
+}
+
+/* --- TABLAS & INPUTS --- */
+.table-soweb th {
+    background-color: #f8fafc;
+    color: #64748b;
+    font-size: 0.8rem;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    border-bottom: 1px solid #e2e8f0;
+}
+
+.form-control:focus, .form-select:focus {
+    border-color: var(--soweb-primary);
+    box-shadow: 0 0 0 4px rgba(79, 70, 229, 0.15);
+}
+
+/* --- LÍNEA DE TIEMPO (TIMELINE) --- */
+.timeline-item {
+    position: relative;
+    padding-left: 30px;
+    border-left: 2px solid #e2e8f0;
+    padding-bottom: 24px;
+}
+
+.timeline-item:last-child {
+    border-left: 2px solid transparent;
+}
+
+.timeline-dot {
+    position: absolute;
+    left: -9px;
+    top: 0;
+    width: 16px;
+    height: 16px;
+    border-radius: 50%;
+    background: var(--soweb-primary);
+    border: 3px solid white;
+    box-shadow: 0 0 0 2px var(--soweb-primary);
+}

@@ -1,0 +1,208 @@
+{% extends 'crm/base.html' %}
+
+{% block content %}
+<!-- Encabezado de la Sección -->
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <div>
+        <h2 class="fw-bold text-dark mb-0">Directorio de Clientes</h2>
+        <span class="text-muted small">Gestión, filtrado y exportación de la cartera general de contactos</span>
+    </div>
+    <div class="d-flex gap-2">
+        <a href="{% url 'exportar_clientes_csv' %}" class="btn btn-soweb-outline d-flex align-items-center gap-2" title="Exportar a Excel / CSV">
+            <i class="bi bi-file-earmark-spreadsheet-fill text-success"></i>
+            <span>Exportar CSV</span>
+        </a>
+        <a href="{% url 'crear_cliente' %}" class="btn btn-soweb-primary d-flex align-items-center gap-2">
+            <i class="bi bi-person-plus-fill"></i>
+            <span>Nuevo Cliente</span>
+        </a>
+    </div>
+</div>
+
+<!-- Tarjeta con Buscador y Filtros -->
+<div class="soweb-card p-4 mb-4">
+    <form method="get" class="row g-3">
+        <!-- Buscador general por Texto -->
+        <div class="col-md-5">
+            <label class="form-label small text-secondary fw-semibold">Buscar por nombre o empresa</label>
+            <div class="input-group">
+                <span class="input-group-text bg-light border-end-0 text-muted"><i class="bi bi-search"></i></span>
+                <input type="text" name="q" value="{{ query }}" class="form-control border-start-0 bg-light" placeholder="Ej. Juan Pérez o Empresa SA">
+            </div>
+        </div>
+
+        <!-- Filtro por Estado -->
+        <div class="col-md-3">
+            <label class="form-label small text-secondary fw-semibold">Estado General</label>
+            <select name="estado" class="form-select bg-light">
+                <option value="">Todos los estados</option>
+                <option value="activo" {% if estado_filter == 'activo' %}selected{% endif %}>Activo</option>
+                <option value="inactivo" {% if estado_filter == 'inactivo' %}selected{% endif %}>Inactivo</option>
+            </select>
+        </div>
+
+        <!-- Filtro por Etapa CRM -->
+        <div class="col-md-3">
+            <label class="form-label small text-secondary fw-semibold">Etapa CRM</label>
+            <select name="etapa" class="form-select bg-light">
+                <option value="">Todas las etapas</option>
+                <option value="prospecto" {% if etapa_filter == 'prospecto' %}selected{% endif %}>Prospecto</option>
+                <option value="activo" {% if etapa_filter == 'activo' %}selected{% endif %}>Activo</option>
+                <option value="frecuente" {% if etapa_filter == 'frecuente' %}selected{% endif %}>Frecuente</option>
+                <option value="inactivo" {% if etapa_filter == 'inactivo' %}selected{% endif %}>Inactivo</option>
+            </select>
+        </div>
+
+        <!-- Botones de Acción para Filtrar -->
+        <div class="col-md-1 d-flex align-items-end">
+            <button type="submit" class="btn btn-soweb-primary w-100" title="Aplicar Filtros">
+                <i class="bi bi-funnel-fill"></i>
+            </button>
+        </div>
+    </form>
+</div>
+
+<!-- Tabla Principal de Clientes -->
+<div class="soweb-card card overflow-hidden mb-5">
+    <div class="table-responsive">
+        <table class="table table-hover table-soweb align-middle mb-0">
+            <thead>
+                <tr>
+                    <th class="ps-4">Contacto / Empresa</th>
+                    <th>Correo Electrónico</th>
+                    <th>Teléfono</th>
+                    {% if user.is_staff %}
+                    <th>Vendedor Asignado</th>
+                    {% endif %}
+                    <th>Etapa CRM</th>
+                    <th>Estado</th>
+                    <th class="text-end pe-4">Acciones</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for cliente in clientes %}
+                <tr>
+                    <td class="ps-4">
+                        <div class="d-flex align-items-center gap-3">
+                            <div class="icon-box bg-primary bg-opacity-10 text-primary fw-bold rounded-circle" style="width: 40px; height: 40px; font-size: 0.9rem;">
+                                {{ cliente.nombre|slice:":1"|upper }}
+                            </div>
+                            <div>
+                                <a href="{% url 'detalle_cliente' cliente.pk %}" class="fw-bold text-dark text-decoration-none d-block">
+                                    {{ cliente.nombre }}
+                                </a>
+                                <small class="text-muted">{{ cliente.empresa|default:"Particular" }}</small>
+                            </div>
+                        </div>
+                    </td>
+                    <td><span class="text-secondary">{{ cliente.correo }}</span></td>
+                    <td><span class="text-secondary">{{ cliente.telefono|default:"—" }}</span></td>
+                    {% if user.is_staff %}
+                    <td>
+                        <span class="badge bg-light text-dark border px-2 py-1 fw-medium">
+                            <i class="bi bi-person me-1"></i>{{ cliente.vendedor.username|default:"Sin asignar" }}
+                        </span>
+                    </td>
+                    {% endif %}
+                    <td>
+                        <span class="badge bg-primary bg-opacity-10 text-primary rounded-pill px-2 py-1 text-capitalize fw-semibold small">
+                            {{ cliente.etapa_crm }}
+                        </span>
+                    </td>
+                    <td>
+                        <span class="badge {% if cliente.estado == 'activo' %}bg-success text-success{% else %}bg-secondary text-secondary{% endif %} bg-opacity-10 rounded-pill px-2 py-1 text-capitalize fw-semibold small">
+                            {{ cliente.estado }}
+                        </span>
+                    </td>
+                    <td class="text-end pe-4">
+                        <div class="btn-group">
+                            <a href="{% url 'detalle_cliente' cliente.pk %}" class="btn btn-sm btn-soweb-outline" title="Ver Detalle">
+                                <i class="bi bi-eye-fill"></i>
+                            </a>
+                            <a href="{% url 'historial_cliente' cliente.pk %}" class="btn btn-sm btn-soweb-outline text-info" title="Historial / Minutas">
+                                <i class="bi bi-clock-history"></i>
+                            </a>
+                            <a href="{% url 'editar_cliente' cliente.pk %}" class="btn btn-sm btn-soweb-outline text-warning" title="Editar">
+                                <i class="bi bi-pencil-fill"></i>
+                            </a>
+                            <button type="button" class="btn btn-sm btn-soweb-outline text-danger" data-bs-toggle="modal" data-bs-target="#deleteModal{{ cliente.pk }}" title="Eliminar">
+                                <i class="bi bi-trash-fill"></i>
+                            </button>
+                        </div>
+
+                        <!-- Modal de Confirmación para este cliente -->
+                        <div class="modal fade text-start" id="deleteModal{{ cliente.pk }}" tabindex="-1" aria-hidden="true">
+                            <div class="modal-dialog modal-dialog-centered">
+                                <div class="modal-content border-0 shadow">
+                                    <div class="modal-header border-0 pb-0">
+                                        <h5 class="modal-title fw-bold text-dark">Confirmar Eliminación</h5>
+                                        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                                    </div>
+                                    <div class="modal-body text-center py-4">
+                                        <i class="bi bi-exclamation-triangle text-danger display-4 d-block mb-3"></i>
+                                        <p class="mb-1 text-dark">¿Estás seguro de que deseas eliminar a <strong>{{ cliente.nombre }}</strong>?</p>
+                                        <small class="text-muted">Esta acción borrará al cliente de la base de datos de manera permanente.</small>
+                                    </div>
+                                    <div class="modal-footer border-0 bg-light justify-content-center">
+                                        <button type="button" class="btn btn-light px-4" data-bs-dismiss="modal">Cancelar</button>
+                                        <form action="{% url 'eliminar_cliente' cliente.pk %}" method="post" class="d-inline">
+                                            {% csrf_token %}
+                                            <button type="submit" class="btn btn-danger px-4">Sí, Eliminar</button>
+                                        </form>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </td>
+                </tr>
+                {% empty %}
+                <tr>
+                    <td colspan="{% if user.is_staff %}7{% else %}6{% endif %}" class="text-center py-5 text-muted">
+                        <i class="bi bi-search fs-1 opacity-50 d-block mb-2"></i>
+                        No se encontraron clientes con los criterios seleccionados.
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+
+    <!-- Contenedor de Paginación -->
+    {% if clientes.has_other_pages %}
+    <div class="d-flex justify-content-between align-items-center p-3 border-top bg-light">
+        <small class="text-muted">
+            Mostrando página <strong>{{ clientes.number }}</strong> de <strong>{{ clientes.paginator.num_pages }}</strong>
+        </small>
+        <nav>
+            <ul class="pagination pagination-sm mb-0">
+                {% if clientes.has_previous %}
+                    <li class="page-item">
+                        <a class="page-link" href="?page={{ clientes.previous_page_number }}&q={{ query }}&estado={{ estado_filter }}&etapa={{ etapa_filter }}">Anterior</a>
+                    </li>
+                {% else %}
+                    <li class="page-item disabled"><span class="page-link">Anterior</span></li>
+                {% endif %}
+
+                {% for i in clientes.paginator.page_range %}
+                    {% if clientes.number == i %}
+                        <li class="page-item active"><span class="page-link bg-primary border-primary">{{ i }}</span></li>
+                    {% else %}
+                        <li class="page-item">
+                            <a class="page-link" href="?page={{ i }}&q={{ query }}&estado={{ estado_filter }}&etapa={{ etapa_filter }}">{{ i }}</a>
+                        </li>
+                    {% endif %}
+                {% endfor %}
+
+                {% if clientes.has_next %}
+                    <li class="page-item">
+                        <a class="page-link" href="?page={{ clientes.next_page_number }}&q={{ query }}&estado={{ estado_filter }}&etapa={{ etapa_filter }}">Siguiente</a>
+                    </li>
+                {% else %}
+                    <li class="page-item disabled"><span class="page-link">Siguiente</span></li>
+                {% endif %}
+            </ul>
+        </nav>
+    </div>
+    {% endif %}
+</div>
+{% endblock %}
