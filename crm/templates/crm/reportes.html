@@ -1,7 +1,14 @@
 {% extends 'crm/base.html' %}
 
 {% block content %}
-<!-- Encabezado -->
+{% comment %}
+  Vista de Reportes y Métricas de Rendimiento:
+  Muestra indicadores comparativos (KPIs con tendencia porcentual vs mes anterior)
+  y dos gráficas interactivas con Chart.js para analizar la distribución por tipo de contacto
+  y la salud del funnel comercial (Etapas CRM).
+{% endcomment %}
+
+{# Encabezado de la sección #}
 <div class="d-flex justify-content-between align-items-center mb-4">
     <div>
         <h2 class="fw-bold text-dark mb-0">Reportes y Métricas</h2>
@@ -9,9 +16,9 @@
     </div>
 </div>
 
-<!-- Tarjetas de Resumen General con Tendencias de Incremento / Bajada -->
+{# Tarjetas de Resumen General con Tendencias de Incremento / Bajada #}
 <div class="row g-3 mb-4">
-    <!-- Total Clientes & Nuevos del Mes -->
+    {# KPI 1: Captación de nuevos clientes en el mes actual con indicador de variación #}
     <div class="col-md-3">
         <div class="soweb-card card p-3">
             <span class="text-muted small fw-semibold text-uppercase">Nuevos Clientes (Mes)</span>
@@ -31,7 +38,7 @@
         </div>
     </div>
 
-    <!-- Clientes Activos -->
+    {# KPI 2: Total de clientes activos en relación con la cartera global #}
     <div class="col-md-3">
         <div class="soweb-card card p-3">
             <span class="text-muted small fw-semibold text-uppercase">Clientes Activos</span>
@@ -40,7 +47,7 @@
         </div>
     </div>
 
-    <!-- Interacciones con Variación Porcentual -->
+    {# KPI 3: Volumen de interacciones del mes con variación porcentual intermensual #}
     <div class="col-md-3">
         <div class="soweb-card card p-3">
             <span class="text-muted small fw-semibold text-uppercase">Interacciones (Mes)</span>
@@ -60,7 +67,7 @@
         </div>
     </div>
 
-    <!-- Sin Seguimiento -->
+    {# KPI 4: Clientes en riesgo/sin seguimiento registrado #}
     <div class="col-md-3">
         <div class="soweb-card card p-3">
             <span class="text-muted small fw-semibold text-uppercase">Sin Seguimiento</span>
@@ -70,8 +77,9 @@
     </div>
 </div>
 
-<!-- Gráficas de Rendimiento (Chart.js) -->
+{# Gráficas de Rendimiento (Chart.js) #}
 <div class="row g-4 mb-5">
+    {# Gráfica 1: Histogramas por canal de contacto (Llamada, Correo, Reunión) #}
     <div class="col-lg-6">
         <div class="soweb-card card h-100 p-4">
             <h5 class="fw-bold text-dark mb-3">
@@ -83,6 +91,7 @@
         </div>
     </div>
 
+    {# Gráfica 2: Dona de distribución por etapa comercial en el funnel #}
     <div class="col-lg-6">
         <div class="soweb-card card h-100 p-4">
             <h5 class="fw-bold text-dark mb-3">
@@ -95,8 +104,10 @@
     </div>
 </div>
 
+{# Inicialización de gráficas con datos inyectados directamente desde la vista reportes_metricas #}
 <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 <script>
+    // Inicialización de Gráfica de Barras para Tipos de Interacción
     const ctxTipo = document.getElementById('chartTipoInteracciones').getContext('2d');
     new Chart(ctxTipo, {
         type: 'bar',
@@ -117,6 +128,7 @@
         }
     });
 
+    // Inicialización de Gráfica de Dona para Etapas CRM
     const ctxEtapas = document.getElementById('chartEtapasCRM').getContext('2d');
     new Chart(ctxEtapas, {
         type: 'doughnut',

@@ -1,6 +1,14 @@
 {% extends 'crm/base.html' %}
 
 {% block content %}
+{% comment %}
+  Vista de Detalle de Cliente:
+  Muestra la ficha técnica completa de un contacto, su clasificación en el pipeline,
+  el resumen de la última minutaría/interacción y un formulario de actualización rápida
+  de etapa en el embudo comercial.
+{% endcomment %}
+
+{# Botón de retorno rápido al directorio principal #}
 <div class="mb-4">
     <a href="{% url 'lista_clientes' %}" class="text-decoration-none text-muted small">
         <i class="bi bi-arrow-left me-1"></i> Volver a la lista de clientes
@@ -8,11 +16,14 @@
 </div>
 
 <div class="row g-4 mb-5">
-    <!-- Información General del Cliente -->
+    {# Columna Izquierda: Tarjeta principal con datos de contacto y acciones del cliente #}
     <div class="col-lg-7">
         <div class="soweb-card p-4 h-100">
+            
+            {# Encabezado del perfil con Avatar dinámico y estado #}
             <div class="d-flex justify-content-between align-items-start mb-3">
                 <div class="d-flex align-items-center gap-3">
+                    {# Inicial destacada extraída del nombre del cliente #}
                     <div class="icon-box bg-primary bg-opacity-10 text-primary fs-3 fw-bold" style="width: 56px; height: 56px;">
                         {{ cliente.nombre|slice:":1"|upper }}
                     </div>
@@ -21,6 +32,8 @@
                         <span class="text-muted small">{{ cliente.empresa|default:"Cliente Particular" }}</span>
                     </div>
                 </div>
+                
+                {# Badge de estado general (Activo / Inactivo) #}
                 <span class="badge {% if cliente.estado == 'activo' %}bg-success{% else %}bg-secondary{% endif %} bg-opacity-10 text-{% if cliente.estado == 'activo' %}success{% else %}secondary{% endif %} rounded-pill px-3 py-1 fw-medium text-capitalize">
                     {{ cliente.estado }}
                 </span>
@@ -28,6 +41,7 @@
 
             <hr class="my-3 text-muted opacity-25">
 
+            {# Malla de atributos del cliente #}
             <div class="row g-3 my-2">
                 <div class="col-sm-6">
                     <span class="text-muted small d-block">Correo Electrónico</span>
@@ -49,6 +63,7 @@
                 </div>
             </div>
 
+            {# Botones de acción rápida: Edición e Historial #}
             <div class="d-flex gap-2 mt-4 pt-2">
                 <a href="{% url 'editar_cliente' cliente.pk %}" class="btn btn-soweb-outline">
                     <i class="bi bi-pencil me-1"></i> Editar Datos
@@ -60,8 +75,10 @@
         </div>
     </div>
 
-    <!-- Panel para Cambio de Etapa CRM (Seguimiento) -->
+    {# Columna Derecha: Clasificación en el embudo y resumen de la última minutaría #}
     <div class="col-lg-5">
+        
+        {# Formulario para avance rápido de Etapa CRM #}
         <div class="soweb-card p-4 mb-4">
             <h5 class="fw-bold text-dark mb-3">
                 <i class="bi bi-diagram-3-fill text-primary me-2"></i>Clasificación y Seguimiento
@@ -85,7 +102,7 @@
             </form>
         </div>
 
-        <!-- Resumen de Última Interacción -->
+        {# Tarjeta de auditoría: Muestra la minutaría más reciente #}
         <div class="soweb-card p-4">
             <h6 class="fw-bold text-dark mb-2">Última Interacción Registrada</h6>
             {% if ultima_interaccion %}

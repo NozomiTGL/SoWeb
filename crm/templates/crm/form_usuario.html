@@ -1,9 +1,17 @@
 {% extends 'crm/base.html' %}
 
 {% block content %}
+{% comment %}
+  Formulario de Administración de Trabajadores (Creación / Edición):
+  Permite dar de alta o modificar cuentas de usuario, asignando credenciales,
+  datos personales, privilegios de administrador (Staff) y estado de la cuenta (Activo/Inactivo).
+{% endcomment %}
+
 <div class="row justify-content-center my-4">
     <div class="col-md-7 col-lg-6">
         <div class="soweb-card p-4">
+            
+            {# Encabezado dinámico con opción de retorno al listado #}
             <div class="d-flex justify-content-between align-items-center mb-4">
                 <h3 class="fw-bold text-dark mb-0">{{ titulo }}</h3>
                 <a href="{% url 'lista_usuarios' %}" class="btn btn-sm btn-soweb-outline">
@@ -11,9 +19,11 @@
                 </a>
             </div>
 
+            {# Formulario de gestión de credenciales y perfil #}
             <form method="post">
                 {% csrf_token %}
                 
+                {# El campo de username solo se muestra al crear un usuario nuevo #}
                 {% if not usuario_target %}
                 <div class="mb-3">
                     <label class="form-label small text-secondary fw-semibold">Nombre de Usuario (Login)</label>
@@ -21,6 +31,7 @@
                 </div>
                 {% endif %}
 
+                {# Malla de nombres y apellidos #}
                 <div class="row g-3 mb-3">
                     <div class="col-md-6">
                         <label class="form-label small text-secondary fw-semibold">Nombre(s)</label>
@@ -32,11 +43,13 @@
                     </div>
                 </div>
 
+                {# Correo corporativo del trabajador #}
                 <div class="mb-3">
                     <label class="form-label small text-secondary fw-semibold">Correo Electrónico</label>
                     <input type="email" name="email" value="{{ usuario_target.email|default:'' }}" class="form-control bg-light" placeholder="carlos@soweb.com">
                 </div>
 
+                {# Captura de contraseña (requerida en creación, opcional al editar) #}
                 <div class="mb-3">
                     <label class="form-label small text-secondary fw-semibold">
                         {% if usuario_target %}Nueva Contraseña (dejar en blanco para no cambiar){% else %}Contraseña{% endif %}
@@ -44,11 +57,15 @@
                     <input type="password" name="password" class="form-control bg-light" {% if not usuario_target %}required{% endif %} placeholder="••••••••">
                 </div>
 
+                {# Panel de flags de seguridad y control de acceso (RBAC y Estado) #}
                 <div class="p-3 bg-light rounded-3 mb-4">
+                    {# Switch para habilitar permisos de administrador (is_staff) #}
                     <div class="form-check form-switch mb-2">
                         <input class="form-check-input" type="checkbox" name="is_staff" id="is_staff" {% if usuario_target.is_staff %}checked{% endif %}>
                         <label class="form-check-label small fw-semibold text-dark" for="is_staff">Permisos de Administrador (Staff)</label>
                     </div>
+                    
+                    {# Switch para activar o suspender el acceso de un usuario existente #}
                     {% if usuario_target %}
                     <div class="form-check form-switch">
                         <input class="form-check-input" type="checkbox" name="is_active" id="is_active" {% if usuario_target.is_active %}checked{% endif %}>
@@ -57,6 +74,7 @@
                     {% endif %}
                 </div>
 
+                {# Botón para guardar o actualizar las credenciales #}
                 <button type="submit" class="btn btn-soweb-primary w-100">
                     <i class="bi bi-check-circle-fill me-1"></i> Guardar Trabajador
                 </button>

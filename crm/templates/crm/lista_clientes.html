@@ -1,13 +1,21 @@
 {% extends 'crm/base.html' %}
 
 {% block content %}
-<!-- Encabezado de la Sección -->
+{% comment %}
+  Directorio Principal de Clientes:
+  Presenta el listado paginado de contactos comercializables, buscador por coincidencia de texto,
+  filtros dinámicos (Estado y Etapa CRM), exportación CSV y modales interactivos para borrado seguro.
+  Soporta renderizado dinámico de la columna "Vendedor Asignado" en base al rol (Staff/Vendedor).
+{% endcomment %}
+
+{# Encabezado de la Sección con acciones globales de exportación y alta #}
 <div class="d-flex justify-content-between align-items-center mb-4">
     <div>
         <h2 class="fw-bold text-dark mb-0">Directorio de Clientes</h2>
         <span class="text-muted small">Gestión, filtrado y exportación de la cartera general de contactos</span>
     </div>
     <div class="d-flex gap-2">
+        {# Generación y descarga de archivo CSV UTF-8 con BOM #}
         <a href="{% url 'exportar_clientes_csv' %}" class="btn btn-soweb-outline d-flex align-items-center gap-2" title="Exportar a Excel / CSV">
             <i class="bi bi-file-earmark-spreadsheet-fill text-success"></i>
             <span>Exportar CSV</span>
@@ -19,10 +27,10 @@
     </div>
 </div>
 
-<!-- Tarjeta con Buscador y Filtros -->
+{# Módulo de Búsqueda y Filtrado mediante parámetros GET #}
 <div class="soweb-card p-4 mb-4">
     <form method="get" class="row g-3">
-        <!-- Buscador general por Texto -->
+        {# Input de texto para búsqueda por nombre o razón social #}
         <div class="col-md-5">
             <label class="form-label small text-secondary fw-semibold">Buscar por nombre o empresa</label>
             <div class="input-group">
@@ -31,7 +39,7 @@
             </div>
         </div>
 
-        <!-- Filtro por Estado -->
+        {# Filtro por Estado (Activo / Inactivo) #}
         <div class="col-md-3">
             <label class="form-label small text-secondary fw-semibold">Estado General</label>
             <select name="estado" class="form-select bg-light">
@@ -41,7 +49,7 @@
             </select>
         </div>
 
-        <!-- Filtro por Etapa CRM -->
+        {# Filtro por Etapa CRM (Prospecto, Activo, Frecuente, Inactivo) #}
         <div class="col-md-3">
             <label class="form-label small text-secondary fw-semibold">Etapa CRM</label>
             <select name="etapa" class="form-select bg-light">
@@ -53,7 +61,7 @@
             </select>
         </div>
 
-        <!-- Botones de Acción para Filtrar -->
+        {# Botón para procesar los criterios de filtrado #}
         <div class="col-md-1 d-flex align-items-end">
             <button type="submit" class="btn btn-soweb-primary w-100" title="Aplicar Filtros">
                 <i class="bi bi-funnel-fill"></i>
@@ -62,7 +70,7 @@
     </form>
 </div>
 
-<!-- Tabla Principal de Clientes -->
+{# Tabla de Resultados con soporte RBAC y Modales en ciclo #}
 <div class="soweb-card card overflow-hidden mb-5">
     <div class="table-responsive">
         <table class="table table-hover table-soweb align-middle mb-0">
@@ -71,6 +79,7 @@
                     <th class="ps-4">Contacto / Empresa</th>
                     <th>Correo Electrónico</th>
                     <th>Teléfono</th>
+                    {# Condicional RBAC: La columna de Vendedor solo es visible para Administradores #}
                     {% if user.is_staff %}
                     <th>Vendedor Asignado</th>
                     {% endif %}
@@ -84,6 +93,7 @@
                 <tr>
                     <td class="ps-4">
                         <div class="d-flex align-items-center gap-3">
+                            {# Avatar con inicial destacada #}
                             <div class="icon-box bg-primary bg-opacity-10 text-primary fw-bold rounded-circle" style="width: 40px; height: 40px; font-size: 0.9rem;">
                                 {{ cliente.nombre|slice:":1"|upper }}
                             </div>
@@ -97,6 +107,8 @@
                     </td>
                     <td><span class="text-secondary">{{ cliente.correo }}</span></td>
                     <td><span class="text-secondary">{{ cliente.telefono|default:"—" }}</span></td>
+                    
+                    {# Muestra el nombre de usuario del vendedor asignado si el perfil actual es Staff #}
                     {% if user.is_staff %}
                     <td>
                         <span class="badge bg-light text-dark border px-2 py-1 fw-medium">
@@ -104,6 +116,7 @@
                         </span>
                     </td>
                     {% endif %}
+
                     <td>
                         <span class="badge bg-primary bg-opacity-10 text-primary rounded-pill px-2 py-1 text-capitalize fw-semibold small">
                             {{ cliente.etapa_crm }}
@@ -115,6 +128,7 @@
                         </span>
                     </td>
                     <td class="text-end pe-4">
+                        {# Grupo de botones de acción por fila #}
                         <div class="btn-group">
                             <a href="{% url 'detalle_cliente' cliente.pk %}" class="btn btn-sm btn-soweb-outline" title="Ver Detalle">
                                 <i class="bi bi-eye-fill"></i>
@@ -125,12 +139,13 @@
                             <a href="{% url 'editar_cliente' cliente.pk %}" class="btn btn-sm btn-soweb-outline text-warning" title="Editar">
                                 <i class="bi bi-pencil-fill"></i>
                             </a>
+                            {# Disparador del Modal de Eliminación asociando la PK única del registro #}
                             <button type="button" class="btn btn-sm btn-soweb-outline text-danger" data-bs-toggle="modal" data-bs-target="#deleteModal{{ cliente.pk }}" title="Eliminar">
                                 <i class="bi bi-trash-fill"></i>
                             </button>
                         </div>
 
-                        <!-- Modal de Confirmación para este cliente -->
+                        {# Modal dinámico de confirmación de borrado generado por cada cliente en lista #}
                         <div class="modal fade text-start" id="deleteModal{{ cliente.pk }}" tabindex="-1" aria-hidden="true">
                             <div class="modal-dialog modal-dialog-centered">
                                 <div class="modal-content border-0 shadow">
@@ -156,6 +171,7 @@
                     </td>
                 </tr>
                 {% empty %}
+                {# Estado vacío en caso de no coincidir con filtros de búsqueda #}
                 <tr>
                     <td colspan="{% if user.is_staff %}7{% else %}6{% endif %}" class="text-center py-5 text-muted">
                         <i class="bi bi-search fs-1 opacity-50 d-block mb-2"></i>
@@ -167,7 +183,7 @@
         </table>
     </div>
 
-    <!-- Contenedor de Paginación -->
+    {# Barra de Navegación de Paginación (Conserva los parámetros GET activos al cambiar de página) #}
     {% if clientes.has_other_pages %}
     <div class="d-flex justify-content-between align-items-center p-3 border-top bg-light">
         <small class="text-muted">

@@ -1,3 +1,11 @@
+"""
+Módulo de Vistas para la aplicación CRM de SoWeb.
+
+Contiene la lógica de negocio para el Dashboard, CRUD de Clientes, 
+exportación de reportes CSV, historial de interacciones, métricas de rendimiento 
+y administración de trabajadores/usuarios con control de acceso basado en roles (RBAC).
+"""
+
 import csv
 from datetime import timedelta
 from django.shortcuts import render, redirect, get_object_or_404
@@ -13,6 +21,12 @@ from .models import Cliente, Interaccion
 
 
 def es_admin(user):
+    """
+    Función auxiliar para verificar si un usuario posee privilegios administrativos.
+    
+    Returns:
+        bool: True si el usuario es staff o superusuario, False en caso contrario.
+    """
     return user.is_staff or user.is_superuser
 
 
@@ -21,7 +35,14 @@ def es_admin(user):
 # ---------------------------------------------------------
 @login_required
 def dashboard(request):
-    # Si es administrador ve la cartera general; si es vendedor ve solo la suya
+    """
+    Despliega el tablero principal con métricas clave del sistema.
+    
+    Filtra los datos según el rol del usuario autenticado:
+    - Administrador: Visualiza métricas globales.
+    - Vendedor: Visualiza métricas exclusivas de su cartera asignada.
+    """
+    # Consulta condicional según el rol
     if request.user.is_staff:
         clientes_qs = Cliente.objects.all()
     else:
@@ -39,12 +60,13 @@ def dashboard(request):
     else:
         interacciones_qs = Interaccion.objects.filter(usuario=request.user)
 
+    # Interacciones acumuladas en el mes en curso
     interacciones_mes = interacciones_qs.filter(
         fecha__year=ahora.year, 
         fecha__month=ahora.month
     ).count()
 
-    # Clientes de la cartera actual sin interacciones
+    # Identificación de clientes sin interacciones registradas
     clientes_riesgo = clientes_qs.annotate(
         num_interacciones=Count('interacciones')
     ).filter(num_interacciones=0)
@@ -66,16 +88,21 @@ def dashboard(request):
 # ---------------------------------------------------------
 @login_required
 def lista_clientes(request):
+    """
+    Muestra el directorio de clientes con soporte para búsqueda textual,
+    filtrado por estado/etapa y paginación de 10 registros por página.
+    """
     query = request.GET.get('q', '')
     estado_filter = request.GET.get('estado', '')
     etapa_filter = request.GET.get('etapa', '')
 
-    # Filtro base según el rol del usuario
+    # Filtro base según el rol
     if request.user.is_staff:
         clientes_list = Cliente.objects.all().order_by('-fecha_registro')
     else:
         clientes_list = Cliente.objects.filter(vendedor=request.user).order_by('-fecha_registro')
 
+    # Aplicación de filtros dinámicos
     if query:
         clientes_list = clientes_list.filter(nombre__icontains=query) | clientes_list.filter(empresa__icontains=query)
     if estado_filter:
@@ -83,6 +110,7 @@ def lista_clientes(request):
     if etapa_filter:
         clientes_list = clientes_list.filter(etapa_crm=etapa_filter)
 
+    # Paginación
     paginator = Paginator(clientes_list, 10)
     page_number = request.GET.get('page')
     clientes = paginator.get_page(page_number)
@@ -98,9 +126,13 @@ def lista_clientes(request):
 
 @login_required
 def exportar_clientes_csv(request):
+    """
+    Genera y descarga un archivo CSV estructurado con la lista de clientes.
+    Incluye caracteres BOM UTF-8 para garantizar compatibilidad con Microsoft Excel.
+    """
     response = HttpResponse(content_type='text/csv')
     response['Content-Disposition'] = 'attachment; filename="Reporte_Clientes_SoWeb.csv"'
-    response.write('\ufeff'.encode('utf8'))
+    response.write('\ufeff'.encode('utf8'))  # BOM UTF-8
 
     writer = csv.writer(response)
     writer.writerow(['ID', 'Vendedor Asignado', 'Nombre', 'Empresa', 'Correo', 'Teléfono', 'Etapa CRM', 'Estado', 'Fecha Registro'])
@@ -122,6 +154,11 @@ def exportar_clientes_csv(request):
 # ---------------------------------------------------------
 @login_required
 def crear_cliente(request):
+    """
+    Procesa la creación de un nuevo cliente.
+    Si el usuario es vendedor, se le asigna automáticamente.
+    Si es administrador, permite seleccionar el vendedor responsable.
+    """
     vendedores = User.objects.filter(is_active=True) if request.user.is_staff else None
 
     if request.method == 'POST':
@@ -132,7 +169,7 @@ def crear_cliente(request):
         estado = request.POST.get('estado', 'activo')
         etapa_crm = request.POST.get('etapa_crm', 'prospecto')
 
-        # Asignación automática o manual de vendedor
+        # Determinación de propiedad
         if request.user.is_staff:
             vendedor_id = request.POST.get('vendedor')
             vendedor_obj = User.objects.get(pk=vendedor_id) if vendedor_id else request.user
@@ -159,6 +196,10 @@ def crear_cliente(request):
 
 @login_required
 def editar_cliente(request, pk):
+    """
+    Permite actualizar la información de un cliente existente.
+    Garantiza que un vendedor solo pueda modificar clientes de su propia cartera.
+    """
     if request.user.is_staff:
         cliente = get_object_or_404(Cliente, pk=pk)
         vendedores = User.objects.filter(is_active=True)
@@ -174,7 +215,7 @@ def editar_cliente(request, pk):
         cliente.estado = request.POST.get('estado')
         cliente.etapa_crm = request.POST.get('etapa_crm')
 
-        # Reasignación de vendedor si es Administrador
+        # Reasignación exclusiva para personal Staff
         if request.user.is_staff:
             vendedor_id = request.POST.get('vendedor')
             if vendedor_id:
@@ -193,6 +234,9 @@ def editar_cliente(request, pk):
 
 @login_required
 def eliminar_cliente(request, pk):
+    """
+    Elimina un cliente de la base de datos previa validación de permisos sobre el registro.
+    """
     if request.user.is_staff:
         cliente = get_object_or_404(Cliente, pk=pk)
     else:
@@ -212,6 +256,9 @@ def eliminar_cliente(request, pk):
 # ---------------------------------------------------------
 @login_required
 def historial_cliente(request, pk):
+    """
+    Muestra la bitácora de minutas/interacciones de un cliente y permite agregar nuevos registros.
+    """
     if request.user.is_staff:
         cliente = get_object_or_404(Cliente, pk=pk)
     else:
@@ -244,6 +291,9 @@ def historial_cliente(request, pk):
 # ---------------------------------------------------------
 @login_required
 def detalle_cliente(request, pk):
+    """
+    Muestra la vista detallada de un cliente y permite actualizar su etapa en el funnel rápidamente.
+    """
     if request.user.is_staff:
         cliente = get_object_or_404(Cliente, pk=pk)
     else:
@@ -270,6 +320,10 @@ def detalle_cliente(request, pk):
 # ---------------------------------------------------------
 @login_required
 def mi_actividad(request):
+    """
+    Despliega el registro individual de interacciones realizadas por el usuario autenticado,
+    con soporte para filtrado por rango de fechas.
+    """
     actividades = Interaccion.objects.filter(usuario=request.user).select_related('cliente')
     
     fecha_inicio = request.GET.get('fecha_inicio', '')
@@ -294,6 +348,10 @@ def mi_actividad(request):
 # ---------------------------------------------------------
 @login_required
 def reportes_metricas(request):
+    """
+    Genera métricas consolidadas, comparativas intermensuales y desgloses
+    por tipo de comunicación y etapa CRM para la generación de gráficas.
+    """
     if request.user.is_staff:
         clientes_qs = Cliente.objects.all()
         interacciones_qs = Interaccion.objects.all()
@@ -304,11 +362,13 @@ def reportes_metricas(request):
     total_clientes = clientes_qs.count()
     activos = clientes_qs.filter(estado='activo').count()
     
+    # Cálculo de rangos mensuales
     ahora = timezone.now()
     primer_dia_mes_actual = ahora.replace(day=1, hour=0, minute=0, second=0, microsecond=0)
     ultimo_dia_mes_anterior = primer_dia_mes_actual - timedelta(days=1)
     primer_dia_mes_anterior = ultimo_dia_mes_anterior.replace(day=1, hour=0, minute=0, second=0, microsecond=0)
 
+    # Comparativa de interacciones acumuladas
     interacciones_mes = interacciones_qs.filter(fecha__gte=primer_dia_mes_actual).count()
     interacciones_mes_anterior = interacciones_qs.filter(
         fecha__gte=primer_dia_mes_anterior, 
@@ -320,6 +380,7 @@ def reportes_metricas(request):
     else:
         var_interacciones = 100.0 if interacciones_mes > 0 else 0.0
 
+    # Comparativa de captación de nuevos clientes
     clientes_mes = clientes_qs.filter(fecha_registro__gte=primer_dia_mes_actual).count()
     clientes_mes_anterior = clientes_qs.filter(
         fecha_registro__gte=primer_dia_mes_anterior, 
@@ -334,6 +395,7 @@ def reportes_metricas(request):
     clientes_riesgo = clientes_qs.annotate(num_interacciones=Count('interacciones')).filter(num_interacciones=0)
     total_sin_interaccion = clientes_riesgo.count()
 
+    # Conteos agrupados para renderizado visual
     llamadas = interacciones_qs.filter(tipo='llamada').count()
     correos = interacciones_qs.filter(tipo='correo').count()
     reuniones = interacciones_qs.filter(tipo='reunion').count()
@@ -363,9 +425,12 @@ def reportes_metricas(request):
 
 
 # ---------------------------------------------------------
-# 8. REGISTRO DE USUARIOS DEL CRM
+# 8. REGISTRO PÚBLICO DE USUARIOS
 # ---------------------------------------------------------
 def registrar_usuario(request):
+    """
+    Permite el autoregistro de usuarios mediante el formulario estándar de Django.
+    """
     if request.method == 'POST':
         form = UserCreationForm(request.POST)
         if form.is_valid():
@@ -378,11 +443,15 @@ def registrar_usuario(request):
 
 
 # ---------------------------------------------------------
-# 9. GESTIÓN DE TRABAJADORES / USUARIOS (Solo Admin)
+# 9. GESTIÓN DE TRABAJADORES / USUARIOS (Exclusivo Administradores)
 # ---------------------------------------------------------
 @login_required
 @user_passes_test(es_admin)
 def lista_usuarios(request):
+    """
+    Muestra la lista de cuentas de usuario/trabajadores del sistema.
+    Acceso restringido a Administradores.
+    """
     usuarios = User.objects.all().order_by('-date_joined')
     return render(request, 'crm/lista_usuarios.html', {'usuarios': usuarios})
 
@@ -390,6 +459,9 @@ def lista_usuarios(request):
 @login_required
 @user_passes_test(es_admin)
 def crear_usuario(request):
+    """
+    Permite a un administrador dar de alta un nuevo trabajador con asignar roles (staff).
+    """
     if request.method == 'POST':
         username = request.POST.get('username')
         first_name = request.POST.get('first_name')
@@ -418,6 +490,10 @@ def crear_usuario(request):
 @login_required
 @user_passes_test(es_admin)
 def editar_usuario(request, pk):
+    """
+    Permite modificar los datos personales, estado activo/inactivo, rol de staff
+    o restablecer la contraseña de un trabajador existente.
+    """
     usuario_target = get_object_or_404(User, pk=pk)
 
     if request.method == 'POST':

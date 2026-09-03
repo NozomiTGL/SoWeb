@@ -5,23 +5,27 @@
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>SoWeb CRM</title>
-    <!-- Bootstrap 5 CSS -->
+    
+    {# Carga de librerías CSS externas (Bootstrap 5 e Iconos) #}
     <link
       href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css"
       rel="stylesheet"
     />
-    <!-- Bootstrap Icons -->
     <link
       rel="stylesheet"
       href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.0/font/bootstrap-icons.css"
     />
-    <!-- Estilos Centralizados SoWeb -->
+    
+    {# Estilos personalizados para la identidad visual de SoWeb #}
     <link rel="stylesheet" href="{% static 'css/styles.css' %}" />
   </head>
   <body class="d-flex flex-column min-vh-100">
-    <!-- Navbar Superior -->
+
+    {# Barra de navegación principal responsive #}
     <nav class="navbar navbar-expand-lg navbar-dark navbar-soweb py-3 mb-4">
       <div class="container">
+        
+        {# Identidad visual / Isotipo de la plataforma #}
         <a
           class="navbar-brand fw-bold d-flex align-items-center gap-2"
           href="{% url 'dashboard' %}"
@@ -30,6 +34,7 @@
           <span>SoWeb <span class="text-primary fs-6">CRM</span></span>
         </a>
 
+        {# Botón Hamburguesa para dispositivos móviles #}
         <button
           class="navbar-toggler border-0"
           type="button"
@@ -39,6 +44,7 @@
           <span class="navbar-toggler-icon"></span>
         </button>
 
+        {# Enlaces de la aplicación #}
         <div class="collapse navbar-collapse" id="navbarNav">
           <ul class="navbar-nav me-auto ms-lg-4">
             <li class="nav-item">
@@ -61,6 +67,8 @@
                 <i class="bi bi-bar-chart-line-fill me-1"></i> Reportes
               </a>
             </li>
+            
+            {# Módulo de acceso restringido: Visible únicamente para administradores (Staff) #}
             {% if user.is_staff %}
             <li class="nav-item">
               <a class="nav-link px-3" href="{% url 'lista_usuarios' %}">
@@ -70,15 +78,12 @@
             {% endif %}
           </ul>
 
-          {% if user.user.is_authenticated or user.is_authenticated %}
+          {# Menú de estado de usuario autenticado y botón de cierre de sesión #}
+          {% if user.is_authenticated %}
           <div class="d-flex align-items-center gap-3">
             <div class="text-end d-none d-lg-block">
-              <small class="text-muted d-block leading-none"
-                >Usuario activo</small
-              >
-              <span class="text-white fw-semibold small"
-                >{{ user.username }}</span
-              >
+              <small class="text-muted d-block leading-none">Usuario activo</small>
+              <span class="text-white fw-semibold small">{{ user.username }}</span>
             </div>
             <form method="post" action="{% url 'logout' %}">
               {% csrf_token %}
@@ -95,9 +100,13 @@
       </div>
     </nav>
 
-    <!-- Contenido Principal -->
+    {# Contenedor principal donde se inyectará el contenido dinámico de cada plantilla #}
     <main class="container flex-grow-1">
-      <!-- Sistema de Mensajes de Retroalimentación -->
+      
+      {% comment %}
+        Sistema global de mensajes de retroalimentación (Django Messages Framework).
+        Transforma etiquetas como 'error' a clases compatibles con Bootstrap ('danger').
+      {% endcomment %}
       {% if messages %}
         <div class="row justify-content-center mb-4">
           <div class="col-12">
@@ -118,18 +127,18 @@
         </div>
       {% endif %}
 
+      {# Bloque heredable por los templates hijos #}
       {% block content %} {% endblock %}
     </main>
 
-    <!-- Footer -->
+    {# Pie de página unificado #}
     <footer class="bg-white border-top py-3 mt-5">
       <div class="container text-center text-muted small">
-        © 2026 <strong>SoWeb</strong> • Plataforma Interna de Gestión de
-        Clientes
+        © 2026 <strong>SoWeb</strong> • Plataforma Interna de Gestión de Clientes
       </div>
     </footer>
 
-    <!-- Bootstrap 5 Bundle JS -->
+    {# Script JS bundle de Bootstrap para componentes interactivos (dropdowns, modales, alertas) #}
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
   </body>
 </html>

@@ -1,9 +1,17 @@
 {% extends 'crm/base.html' %}
 
 {% block content %}
+{% comment %}
+  Formulario Multipropósito para Clientes (Creación / Edición):
+  Renderiza los campos de captura de datos de contacto, la etapa en el pipeline CRM 
+  y la sección condicional para asignación/reasignación de Vendedor Responsable (Exclusivo Staff).
+{% endcomment %}
+
 <div class="row justify-content-center my-4">
     <div class="col-md-8 col-lg-6">
         <div class="soweb-card p-4">
+            
+            {# Encabezado dinámico según la acción (Registrar Cliente / Editar Cliente) #}
             <div class="d-flex justify-content-between align-items-center mb-4">
                 <h3 class="fw-bold text-dark mb-0">{{ titulo }}</h3>
                 <a href="{% url 'lista_clientes' %}" class="btn btn-sm btn-soweb-outline">
@@ -11,14 +19,17 @@
                 </a>
             </div>
 
+            {# Formulario de captura y actualización #}
             <form method="post">
                 {% csrf_token %}
                 
+                {# Campo: Nombre del Contacto #}
                 <div class="mb-3">
                     <label class="form-label small text-secondary fw-semibold">Nombre del Cliente / Contacto</label>
                     <input type="text" name="nombre" value="{{ cliente.nombre|default:'' }}" class="form-control bg-light" required placeholder="Ej. Ana Martínez">
                 </div>
 
+                {# Campos en malla: Correo Electrónico y Teléfono #}
                 <div class="row g-3 mb-3">
                     <div class="col-md-6">
                         <label class="form-label small text-secondary fw-semibold">Correo Electrónico</label>
@@ -30,11 +41,13 @@
                     </div>
                 </div>
 
+                {# Campo: Empresa u Organización #}
                 <div class="mb-3">
                     <label class="form-label small text-secondary fw-semibold">Empresa / Negocio</label>
                     <input type="text" name="empresa" value="{{ cliente.empresa|default:'' }}" class="form-control bg-light" placeholder="Ej. Soluciones Web SA">
                 </div>
 
+                {# Selecciones dinámicas: Estado de la cuenta y Etapa en el pipeline #}
                 <div class="row g-3 mb-4">
                     <div class="col-md-6">
                         <label class="form-label small text-secondary fw-semibold">Estado General</label>
@@ -54,7 +67,7 @@
                     </div>
                 </div>
 
-                <!-- Selección de Vendedor Asignado (Solo visible para Administradores) -->
+                {# Asignación de Vendedor Responsable: Módulo RBAC renderizado únicamente si el usuario es Administrador #}
                 {% if user.is_staff and vendedores %}
                 <div class="mb-4 p-3 bg-light rounded-3 border">
                     <label class="form-label small text-primary fw-bold mb-1">
@@ -73,6 +86,7 @@
                 </div>
                 {% endif %}
 
+                {# Botón de envío del formulario #}
                 <button type="submit" class="btn btn-soweb-primary w-100">
                     <i class="bi bi-check-circle-fill me-1"></i> Guardar Cliente
                 </button>

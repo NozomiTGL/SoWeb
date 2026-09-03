@@ -1,22 +1,36 @@
 {% extends 'crm/base.html' %}
 
 {% block content %}
+{% comment %}
+  Pantalla de confirmación de eliminación de cliente.
+  Funciona como vista de respaldo independiente (fallback) o página directa
+  para la confirmación de borrado de un registro de cliente y sus relaciones asociadas.
+{% endcomment %}
+
 <div class="row justify-content-center my-5">
     <div class="col-md-6 col-lg-5">
         <div class="soweb-card p-4 text-center">
+            
+            {# Isotipo visual de advertencia para destacar la irreversibilidad de la acción #}
             <div class="icon-box bg-danger bg-opacity-10 text-danger mx-auto mb-3" style="width: 60px; height: 60px; font-size: 1.75rem;">
                 <i class="bi bi-exclamation-triangle-fill"></i>
             </div>
             
             <h4 class="fw-bold text-dark mb-2">Eliminar Cliente</h4>
+            
+            {# Mensaje informativo con el nombre del cliente y advertencia sobre el borrado en cascada #}
             <p class="text-muted small mb-4">
                 ¿Estás seguro de que deseas eliminar permanentemente a <strong>{{ cliente.nombre }}</strong>? Esta acción borrará también todo su historial de interacciones.
             </p>
 
+            {# Formulario POST para ejecutar la eliminación segura en la base de datos #}
             <form method="post">
                 {% csrf_token %}
                 <div class="d-flex justify-content-center gap-2">
+                    {# Botón de cancelación para retornar al directorio general de clientes #}
                     <a href="{% url 'lista_clientes' %}" class="btn btn-soweb-outline">Cancelar</a>
+                    
+                    {# Botón de confirmación para ejecutar el método eliminar_cliente en views.py #}
                     <button type="submit" class="btn btn-danger rounded-3 px-4 fw-medium">
                         <i class="bi bi-trash me-1"></i> Confirmar Eliminación
                     </button>

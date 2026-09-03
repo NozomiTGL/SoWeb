@@ -1,7 +1,14 @@
 {% extends 'crm/base.html' %}
 
 {% block content %}
-<!-- Encabezado del Dashboard -->
+{% comment %}
+  Tablero Principal (Dashboard CRM):
+  Despliega métricas de rendimiento, distribución de la cartera mediante Chart.js 
+  y el listado de clientes en riesgo (sin interacciones registradas).
+  Muestra únicamente los registros asociados al usuario actual o el global en caso de ser Admin.
+{% endcomment %}
+
+{# Encabezado del Dashboard con badge de versión y acción rápida #}
 <div class="d-flex justify-content-between align-items-center mb-4">
     <div>
         <div class="d-flex align-items-center gap-2 mb-1">
@@ -16,9 +23,9 @@
     </a>
 </div>
 
-<!-- Tarjetas de Métricas Principales (4 Indicadores Requeridos) -->
+{# Sección de Indicadores Clave de Rendimiento (KPIs) #}
 <div class="row g-3 mb-4">
-    <!-- 1. Total Clientes -->
+    {# KPI 1: Volumetría total de clientes #}
     <div class="col-md-3">
         <div class="soweb-card card p-3">
             <div class="d-flex align-items-center justify-content-between">
@@ -34,7 +41,7 @@
         </div>
     </div>
 
-    <!-- 2. Clientes Activos con Porcentaje -->
+    {# KPI 2: Clientes activos y proporción en cartera #}
     <div class="col-md-3">
         <div class="soweb-card card p-3">
             <div class="d-flex align-items-center justify-content-between">
@@ -50,7 +57,7 @@
         </div>
     </div>
 
-    <!-- 3. Interacciones (Este Mes) -->
+    {# KPI 3: Actividad/Minutas acumuladas en el mes en curso #}
     <div class="col-md-3">
         <div class="soweb-card card p-3">
             <div class="d-flex align-items-center justify-content-between">
@@ -66,7 +73,7 @@
         </div>
     </div>
 
-    <!-- 4. Clientes Sin Interacción -->
+    {# KPI 4: Alerta de clientes sin historial de interacción #}
     <div class="col-md-3">
         <div class="soweb-card card p-3">
             <div class="d-flex align-items-center justify-content-between">
@@ -83,8 +90,9 @@
     </div>
 </div>
 
+{# Gráficas y Listado de Clientes en Riesgo #}
 <div class="row mb-4">
-    <!-- Gráfica de Pastel / Dona (Activos vs Inactivos) -->
+    {# Representación visual de activos vs inactivos mediante Chart.js #}
     <div class="col-lg-6 mb-4 mb-lg-0">
         <div class="soweb-card card h-100">
             <div class="custom-card-header d-flex align-items-center justify-content-between">
@@ -99,7 +107,7 @@
         </div>
     </div>
 
-    <!-- Clientes en Riesgo (Sin seguimiento) -->
+    {# Módulo de seguimiento urgente (Clientes sin seguimiento) #}
     <div class="col-lg-6">
         <div class="soweb-card card h-100 d-flex flex-column justify-content-between">
             <div>
@@ -112,7 +120,7 @@
                     </span>
                 </div>
                 
-                <!-- Contenedor con Scroll Interno -->
+                {# Contenedor scrollable para evitar desbordamientos visuales #}
                 <div style="max-height: 250px; overflow-y: auto;">
                     <ul class="list-group list-group-flush">
                         {% for cliente in clientes_riesgo %}
@@ -136,7 +144,7 @@
                 </div>
             </div>
 
-            <!-- Footer con acceso directo a la lista general -->
+            {# Footer reactivo de la tarjeta con acceso al listado #}
             {% if total_sin_interaccion > 0 %}
             <div class="card-footer bg-light border-0 text-center py-2">
                 <a href="{% url 'lista_clientes' %}" class="text-primary text-decoration-none small fw-semibold">
@@ -148,7 +156,7 @@
     </div>
 </div>
 
-<!-- Chart.js para Renderizar la Gráfica -->
+{# Scripts de inicialización para Chart.js con paso de variables de contexto desde Django #}
 <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 <script>
     const ctx = document.getElementById('graficaClientes').getContext('2d');

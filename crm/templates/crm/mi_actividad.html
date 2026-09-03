@@ -1,7 +1,13 @@
 {% extends 'crm/base.html' %}
 
 {% block content %}
-<!-- Encabezado -->
+{% comment %}
+  Vista de Registro de Actividad Personal:
+  Muestra la bitácora individual de minutas e interacciones (llamadas, correos, reuniones)
+  efectuadas exclusivamente por el usuario autenticado, con filtrado dinámico por rango de fechas.
+{% endcomment %}
+
+{# Encabezado con indicador numérico total de registros #}
 <div class="d-flex justify-content-between align-items-center mb-4">
     <div>
         <h2 class="fw-bold text-dark mb-0">Mi Actividad</h2>
@@ -12,17 +18,22 @@
     </span>
 </div>
 
-<!-- Tarjeta de Filtro por Rango de Fechas -->
+{# Formulario de Filtrado por Rango de Fechas (Desde / Hasta) #}
 <div class="soweb-card p-4 mb-4">
     <form method="get" class="row g-3 align-items-end">
+        {# Captura de fecha inicial #}
         <div class="col-md-5">
             <label class="form-label small text-secondary fw-semibold">Desde</label>
             <input type="date" name="fecha_inicio" value="{{ fecha_inicio }}" class="form-control bg-light">
         </div>
+        
+        {# Captura de fecha límite #}
         <div class="col-md-5">
             <label class="form-label small text-secondary fw-semibold">Hasta</label>
             <input type="date" name="fecha_fin" value="{{ fecha_fin }}" class="form-control bg-light">
         </div>
+        
+        {# Botón de envío y limpieza condicional de filtros #}
         <div class="col-md-2 d-flex gap-2">
             <button type="submit" class="btn btn-soweb-primary w-100" title="Filtrar">
                 <i class="bi bi-funnel-fill me-1"></i> Filtrar
@@ -36,7 +47,7 @@
     </form>
 </div>
 
-<!-- Tabla de Actividades -->
+{# Tabla de Registro de Minutas #}
 <div class="soweb-card card overflow-hidden mb-5">
     <div class="table-responsive">
         <table class="table table-hover table-soweb align-middle mb-0">
@@ -52,26 +63,35 @@
             <tbody>
                 {% for act in actividades %}
                 <tr>
+                    {# Marca temporal formateada #}
                     <td class="ps-4">
                         <small class="text-dark fw-semibold d-block"><i class="bi bi-calendar3 me-1 text-primary"></i>{{ act.fecha|date:"d/m/Y" }}</small>
                         <small class="text-muted">{{ act.fecha|date:"h:i A" }}</small>
                     </td>
+                    
+                    {# Cliente involucrado en la interacción #}
                     <td>
                         <a href="{% url 'detalle_cliente' act.cliente.pk %}" class="fw-bold text-dark text-decoration-none">
                             {{ act.cliente.nombre }}
                         </a>
                         <small class="text-muted d-block">{{ act.cliente.empresa|default:"Particular" }}</small>
                     </td>
+                    
+                    {# Clasificación de canal de comunicación #}
                     <td>
                         <span class="badge bg-dark bg-opacity-10 text-dark rounded-pill px-3 py-1 text-capitalize fw-semibold small">
                             {{ act.tipo }}
                         </span>
                     </td>
+                    
+                    {# Fragmento de la descripción / minuta con truncado de caracteres para evitar desbordamientos #}
                     <td>
                         <span class="text-secondary small d-inline-block text-truncate" style="max-width: 350px;">
                             {{ act.descripcion }}
                         </span>
                     </td>
+                    
+                    {# Enlace directo al historial completo del cliente correspondiente #}
                     <td class="text-end pe-4">
                         <a href="{% url 'historial_cliente' act.cliente.pk %}" class="btn btn-sm btn-soweb-outline" title="Ver en Historial">
                             <i class="bi bi-arrow-right-short fs-5"></i>
@@ -79,6 +99,7 @@
                     </td>
                 </tr>
                 {% empty %}
+                {# Estado vacío en caso de no existir minutas registradas en el periodo elegido #}
                 <tr>
                     <td colspan="5" class="text-center py-5 text-muted">
                         <i class="bi bi-journal-x fs-1 opacity-50 d-block mb-2"></i>

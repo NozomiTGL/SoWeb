@@ -1,47 +1,68 @@
+{% load static %}
 <!DOCTYPE html>
 <html lang="es">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Registro - SoWeb CRM</title>
-    <!-- Bootstrap 5 CSS & Icons -->
+    
+    {# Carga de librerías CSS externas (Bootstrap 5 e Iconos) #}
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.0/font/bootstrap-icons.css">
-    {% load static %}
+    
+    {# Hoja de estilos personalizada para el diseño corporativo SoWeb #}
     <link rel="stylesheet" href="{% static 'css/styles.css' %}">
 </head>
 <body class="bg-light d-flex align-items-center justify-content-center min-vh-100 py-5">
+
+{% comment %}
+  Pantalla de Autoregistro Público de Usuarios:
+  Utiliza el formulario `UserCreationForm` para el alta de nuevos agentes o vendedores.
+  Itera sobre los campos dinámicos de Django renderizando etiquetas, tipos de entrada,
+  textos de ayuda e indicación de errores de validación.
+{% endcomment %}
 
 <div class="container">
     <div class="row justify-content-center">
         <div class="col-md-6 col-lg-4">
             <div class="soweb-card p-4 shadow-sm bg-white rounded-3">
+                
+                {# Encabezado y Branding de la pantalla de registro #}
                 <div class="text-center mb-4">
                     <span class="brand-badge mb-2 d-inline-block">SOWEB CRM</span>
                     <h4 class="fw-bold text-dark mb-1">Crear Cuenta</h4>
                     <p class="text-muted small">Registro para nuevos agentes del equipo</p>
                 </div>
 
+                {# Formulario de Registro procesado por registrar_usuario en views.py #}
                 <form method="post">
                     {% csrf_token %}
+                    
+                    {# Ciclo dinámico para renderizar los campos del UserCreationForm #}
                     {% for field in form %}
                     <div class="mb-3">
                         <label class="form-label small text-secondary fw-semibold">{{ field.label }}</label>
                         <input type="{{ field.field.widget.input_type }}" name="{{ field.name }}" class="form-control bg-light" required>
+                        
+                        {# Texto de ayuda dinámico proporcionado por las políticas de contraseñas de Django #}
                         {% if field.help_text %}
                             <small class="form-text text-muted fs-7 d-block text-truncate" style="max-width: 100%;">{{ field.help_text }}</small>
                         {% endif %}
+                        
+                        {# Despliegue de errores específicos de cada campo en caso de fallar la validación #}
                         {% for error in field.errors %}
                             <div class="text-danger small mt-1">{{ error }}</div>
                         {% endfor %}
                     </div>
                     {% endfor %}
 
+                    {# Botón de envío del formulario #}
                     <button type="submit" class="btn btn-soweb-primary w-100 mt-3">
                         <i class="bi bi-person-plus-fill me-1"></i> Registrarse
                     </button>
                 </form>
 
+                {# Enlace de retorno a la pantalla de Inicio de Sesión #}
                 <div class="text-center mt-4 pt-3 border-top">
                     <span class="text-muted small">¿Ya tienes cuenta?</span>
                     <a href="{% url 'login' %}" class="text-primary text-decoration-none small fw-bold ms-1">Iniciar Sesión</a>
