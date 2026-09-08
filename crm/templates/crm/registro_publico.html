@@ -1,0 +1,84 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SoWeb CRM - Registro de Cliente</title>
+    
+    {# Carga de librerías CSS (Bootstrap 5 e Iconos) #}
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.0/font/bootstrap-icons.css">
+    
+    {# Estilos corporativos SoWeb #}
+    <link rel="stylesheet" href="{% static 'css/styles.css' %}">
+</head>
+<body class="bg-light d-flex align-items-center min-vh-100 py-4">
+
+    <div class="container">
+        <div class="row justify-content-center">
+            <div class="col-md-6 col-lg-5">
+                <div class="soweb-card p-4 shadow-sm border-0 rounded-4 bg-white">
+                    
+                    {# Encabezado #}
+                    <div class="text-center mb-4">
+                        <span class="brand-badge fs-6 mb-2 d-inline-block">SOWEB CRM</span>
+                        <h3 class="fw-bold text-dark mt-1">Registro de Cliente</h3>
+                        <p class="text-muted small">Ingresa tus datos de contacto para iniciar la atención comercial con nuestro equipo.</p>
+                    </div>
+
+                    {# Mensajes flash de error o éxito de Django #}
+                    {% if messages %}
+                        {% for message in messages %}
+                            <div class="alert alert-{{ message.tags }} alert-dismissible fade show small border-0" role="alert">
+                                {{ message }}
+                                <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+                            </div>
+                        {% endfor %}
+                    {% endif %}
+
+                    {# Formulario de Registro #}
+                    <form method="post" action="{% url 'registro_cliente_publico' %}">
+                        {% csrf_token %}
+
+                        <div class="mb-3">
+                            <label class="form-label small text-secondary fw-semibold">Nombre Completo *</label>
+                            <input type="text" name="nombre" value="{{ nombre|default:'' }}" class="form-control bg-light border-0" required placeholder="Ej. Ana Martínez">
+                        </div>
+
+                        <div class="mb-3">
+                            <label class="form-label small text-secondary fw-semibold">Correo Electrónico *</label>
+                            <input type="email" name="correo" class="form-control bg-light border-0" required placeholder="ejemplo@empresa.com">
+                        </div>
+
+                        <div class="mb-3">
+                            <label class="form-label small text-secondary fw-semibold">Teléfono de Contacto</label>
+                            <input type="text" name="telefono" value="{{ telefono|default:'' }}" class="form-control bg-light border-0" placeholder="Ej. 4491234567">
+                        </div>
+
+                        <div class="mb-4">
+                            <label class="form-label small text-secondary fw-semibold">Empresa / Negocio (Opcional)</label>
+                            <input type="text" name="empresa" value="{{ empresa|default:'' }}" class="form-control bg-light border-0" placeholder="Ej. Mi Pyme S.A.">
+                        </div>
+
+                        <button type="submit" class="btn btn-soweb-primary w-100 py-2 fw-semibold">
+                            <i class="bi bi-send-fill me-1"></i> Enviar Registro
+                        </button>
+                    </form>
+
+                    {# Enlace para volver al Inicio de Sesión #}
+                    <div class="text-center mt-4 pt-3 border-top">
+                        <span class="text-muted small">¿Eres trabajador del sistema?</span>
+                        <a href="{% url 'login' %}" class="text-primary text-decoration-none small fw-bold ms-1">Inicia sesión</a>
+                    </div>
+
+                </div>
+                <p class="text-center text-muted small mt-4">© SoWeb CRM • Todos los derechos reservados</p>
+            </div>
+        </div>
+    </div>
+
+    {# Script de JS para habilitar el cierre de alertas #}
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+</body>
+</html>

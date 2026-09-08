@@ -37,7 +37,7 @@ INSTALLED_APPS = [
     'django.contrib.sessions',
     'django.contrib.messages',
     'django.contrib.staticfiles',
-
+    'rest_framework',
     'crm',
 
 ]
@@ -134,6 +134,6 @@ MAILERS = {
     },
 }
 
-#Par redirigir despus de hacer login o logout
+#Para redirigir despus de hacer login o logout
 LOGIN_REDIRECT_URL = '/'
 LOGOUT_REDIRECT_URL = '/accounts/login/'

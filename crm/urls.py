@@ -1,13 +1,22 @@
 """
 Módulo de Enrutamiento (URLs) para la aplicación CRM de SoWeb.
 
-Mapea las peticiones HTTP a sus respectivas vistas en `crm/views.py`,
+Mapea las peticiones HTTP a sus respectivas vistas en `crm/views.py` y `crm/api.py`,
 organizando las rutas por módulos: Dashboard, Directorio de Clientes,
-Actividad Personal, Reportes y Administración de Usuarios/Trabajadores.
+Actividad Personal, Reportes, Administración de Usuarios y la API REST.
 """
 
-from django.urls import path
+from django.urls import path, include
+from rest_framework.routers import DefaultRouter
 from . import views
+from .api import ClienteViewSet, InteraccionViewSet
+
+# ---------------------------------------------------------
+# GENERADOR DE RUTAS API REST (Django REST Framework)
+# ---------------------------------------------------------
+router = DefaultRouter()
+router.register(r'clientes', ClienteViewSet)
+router.register(r'interacciones', InteraccionViewSet)
 
 urlpatterns = [
     # ---------------------------------------------------------
@@ -16,7 +25,7 @@ urlpatterns = [
     path('', views.dashboard, name='dashboard'),
 
     # ---------------------------------------------------------
-    # 2. GESTIÓN Y CRUD DE CLIENTES
+    # 2. GESTIÓN Y CRUD DE CLIENTES (Frontend)
     # ---------------------------------------------------------
     path('clientes/', views.lista_clientes, name='lista_clientes'),
     path('clientes/crear/', views.crear_cliente, name='crear_cliente'),
@@ -38,4 +47,11 @@ urlpatterns = [
     path('usuarios/', views.lista_usuarios, name='lista_usuarios'),
     path('usuarios/crear/', views.crear_usuario, name='crear_usuario'),
     path('usuarios/<int:pk>/editar/', views.editar_usuario, name='editar_usuario'),
+
+    # ---------------------------------------------------------
+    # 5. API REST (Endpoints)
+    # ---------------------------------------------------------
+    path('api/', include(router.urls)),
+    # Enlace de registro público para clientes:
+    path('registro-cliente/', views.registro_cliente_publico, name='registro_cliente_publico'),
 ]

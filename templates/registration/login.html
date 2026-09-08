@@ -19,7 +19,7 @@
       Pantalla de Autenticación / Inicio de Sesión:
       Utiliza la vista nativa `django.contrib.auth.views.LoginView`.
       Contiene captura de credenciales, despliegue condicional de errores
-      y acceso directo al formulario de autorregistro público de trabajadores.
+      y acceso directo al formulario de autorregistro público de clientes.
     {% endcomment %}
 
     <div class="container">
@@ -70,10 +70,10 @@
                             </button>
                         </form>
 
-                        {# Enlace a la vista pública de registro de usuarios #}
+                        {# Enlace a la vista pública de registro de clientes #}
                         <div class="text-center mt-4 pt-3 border-top">
-                            <span class="text-muted small">¿No tienes cuenta?</span>
-                            <a href="{% url 'registrar_usuario' %}" class="text-primary text-decoration-none small fw-bold ms-1">Regístrate</a>
+                            <span class="text-muted small">¿Eres un nuevo cliente?</span>
+                            <a href="{% url 'registro_cliente_publico' %}" class="text-primary text-decoration-none small fw-bold ms-1">Regístrate aquí</a>
                         </div>
                     </div>
                 </div>

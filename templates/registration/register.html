@@ -46,7 +46,7 @@
                         
                         {# Texto de ayuda dinámico proporcionado por las políticas de contraseñas de Django #}
                         {% if field.help_text %}
-                            <small class="form-text text-muted fs-7 d-block text-truncate" style="max-width: 100%;">{{ field.help_text }}</small>
+                            <small class="form-text text-muted fs-7 d-block text-break" style="max-width: 100%;">{{ field.help_text }}</small>
                         {% endif %}
                         
                         {# Despliegue de errores específicos de cada campo en caso de fallar la validación #}

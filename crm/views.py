@@ -512,3 +512,42 @@ def editar_usuario(request, pk):
         return redirect('lista_usuarios')
 
     return render(request, 'crm/form_usuario.html', {'usuario_target': usuario_target, 'titulo': 'Editar Trabajador'})
+
+# ---------------------------------------------------------
+# REGISTRO PÚBLICO DE CLIENTES (Landing / Captación)
+# ---------------------------------------------------------
+def registro_cliente_publico(request):
+    """
+    Permite que prospectos o clientes se auto-registren desde la landing page o enlace público.
+    Crea el cliente en estado 'activo' y etapa 'prospecto', dejando el vendedor como 'Sin asignar' (None).
+    """
+    if request.method == 'POST':
+        nombre = request.POST.get('nombre')
+        correo = request.POST.get('correo')
+        telefono = request.POST.get('telefono')
+        empresa = request.POST.get('empresa')
+
+        # Validación básica para evitar correos duplicados
+        if Cliente.objects.filter(correo=correo).exists():
+            messages.error(request, 'Este correo electrónico ya se encuentra registrado en nuestro sistema.')
+            return render(request, 'crm/registro_publico.html', {
+                'nombre': nombre,
+                'telefono': telefono,
+                'empresa': empresa
+            })
+
+        # Creación del registro sin vendedor asignado (vendedor=None)
+        Cliente.objects.create(
+            vendedor=None,
+            nombre=nombre,
+            correo=correo,
+            telefono=telefono,
+            empresa=empresa,
+            estado='activo',
+            etapa_crm='prospecto'
+        )
+        
+        messages.success(request, '¡Gracias por registrarte! Un asesor comercial se pondrá en contacto contigo pronto.')
+        return redirect('registro_cliente_publico')
+
+    return render(request, 'crm/registro_publico.html')
