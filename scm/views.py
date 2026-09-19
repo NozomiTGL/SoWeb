@@ -1,8 +1,8 @@
 from django.shortcuts import render, redirect, get_object_or_404
 from django.contrib.auth.decorators import login_required
 from django.contrib import messages
-from .models import Proveedor, Producto, MovimientoInventario
-from .forms import ProveedorForm, ProductoForm, MovimientoInventarioForm
+from .models import Proveedor, Producto, MovimientoInventario, Pedido
+from .forms import ProveedorForm, ProductoForm, MovimientoInventarioForm, PedidoForm
 
 # ==========================================
 # VISTAS DE PROVEEDORES
@@ -167,3 +167,69 @@ def vista_inventario(request):
     """Pantalla 6: Consulta de existencias y estado de stock."""
     productos = Producto.objects.all().order_by('nombre')
     return render(request, 'scm/inventario.html', {'productos': productos})
+
+# ==========================================
+# MÓDULO DE PEDIDOS (Fase 2)
+# ==========================================
+@login_required
+def lista_pedidos(request):
+    """Pantalla 11: Gestión de pedidos de reposición o suministro."""
+    pedidos = Pedido.objects.all().select_related('producto', 'proveedor')
+    
+    # Filtros de búsqueda (Estado y Tipo)
+    filtro_estado = request.GET.get('estado')
+    filtro_tipo = request.GET.get('tipo')
+    
+    if filtro_estado:
+        pedidos = pedidos.filter(estado=filtro_estado)
+    if filtro_tipo:
+        pedidos = pedidos.filter(tipo=filtro_tipo)
+        
+    return render(request, 'scm/lista_pedidos.html', {
+        'pedidos': pedidos,
+        'filtro_estado': filtro_estado,
+        'filtro_tipo': filtro_tipo,
+    })
+
+@login_required
+def crear_pedido(request):
+    """Pantalla 12: Registro de un nuevo pedido."""
+    if request.method == 'POST':
+        form = PedidoForm(request.POST)
+        if form.is_valid():
+            form.save()
+            messages.success(request, 'Pedido registrado con éxito.')
+            return redirect('lista_pedidos')
+    else:
+        form = PedidoForm()
+    
+    return render(request, 'scm/form_pedido.html', {'form': form, 'titulo': 'Nuevo Pedido'})
+
+@login_required
+def editar_pedido(request, id):
+    pedido = get_object_or_404(Pedido, id=id)
+    if request.method == 'POST':
+        form = PedidoForm(request.POST, instance=pedido)
+        if form.is_valid():
+            # Aquí ocurre la magia: Si cambias el estado a "Surtido", 
+            # el models.py detectará el cambio y sumará el stock al inventario.
+            form.save()
+            messages.success(request, 'Pedido actualizado con éxito.')
+            return redirect('lista_pedidos')
+    else:
+        form = PedidoForm(instance=pedido)
+    
+    return render(request, 'scm/form_pedido.html', {'form': form, 'titulo': 'Editar Pedido'})
+
+@login_required
+def eliminar_pedido(request, id):
+    pedido = get_object_or_404(Pedido, id=id)
+    if request.method == 'POST':
+        pedido.delete()
+        messages.success(request, 'Pedido eliminado con éxito.')
+        return redirect('lista_pedidos')
+    
+    # Reutilizamos tu plantilla de confirmación genérica
+    return render(request, 'scm/confirmar_eliminacion.html', {
+        'objeto': f"Pedido {pedido.folio}", 'tipo': 'Pedido', 'url_cancelar': 'lista_pedidos'
+    })

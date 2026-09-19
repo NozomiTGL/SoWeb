@@ -130,3 +130,65 @@ class MovimientoInventario(models.Model):
             
             self.producto.save() # Guardamos el nuevo stock en el producto
 
+class Pedido(models.Model):
+    """
+    Gestiona las órdenes de reposición de capacidad o infraestructura 
+    solicitadas a los proveedores.
+    """
+    ESTADO_CHOICES = [
+        ('Pendiente', 'Pendiente'),
+        ('En proceso', 'En proceso'),
+        ('Surtido', 'Surtido'),
+        ('Cancelado', 'Cancelado'),
+    ]
+
+    TIPO_CHOICES = [
+        ('Reposicion', 'Reposición'),
+        ('Venta', 'Venta'),
+        ('Ajuste', 'Ajuste'),
+    ]
+
+    # El folio será autogenerado (ej. PC-001)
+    folio = models.CharField(max_length=20, unique=True, blank=True, verbose_name="Folio")
+    producto = models.ForeignKey(Producto, on_delete=models.CASCADE, verbose_name="Servicio / Producto")
+    proveedor = models.ForeignKey(Proveedor, on_delete=models.RESTRICT, verbose_name="Proveedor")
+    cantidad = models.PositiveIntegerField(verbose_name="Cantidad")
+    tipo = models.CharField(max_length=20, choices=TIPO_CHOICES, default='Reposicion', verbose_name="Tipo")
+    estado = models.CharField(max_length=20, choices=ESTADO_CHOICES, default='Pendiente', verbose_name="Estado")
+    fecha = models.DateField(default=timezone.now, verbose_name="Fecha")
+    notas = models.TextField(blank=True, null=True, verbose_name="Notas")
+
+    class Meta:
+        verbose_name = "Pedido"
+        verbose_name_plural = "Pedidos"
+        ordering = ['-fecha', '-id']
+
+    def __str__(self):
+        return f"{self.folio} - {self.producto.nombre}"
+
+    def save(self, *args, **kwargs):
+        # 1. Autogenerar el Folio si es un pedido nuevo
+        is_new = self.pk is None
+        if is_new and not self.folio:
+            # Cuenta cuántos pedidos hay y le suma 1 para el folio (ej. PC-005)
+            total_pedidos = Pedido.objects.count() + 1
+            self.folio = f"PC-{total_pedidos:03d}"
+            
+        # Obtenemos el estado anterior si se está actualizando
+        estado_anterior = None
+        if not is_new:
+            old_instance = Pedido.objects.get(pk=self.pk)
+            estado_anterior = old_instance.estado
+
+        # 2. Guardamos el pedido
+        super().save(*args, **kwargs)
+
+        # 3. Automatización: Si el pedido cambia a "Surtido", generar Entrada de Inventario
+        if self.estado == 'Surtido' and estado_anterior != 'Surtido':
+            MovimientoInventario.objects.create(
+                producto=self.producto,
+                tipo='ENTRADA',
+                cantidad=self.cantidad,
+                motivo='reposicion',
+                usuario=None  # Podrías pasar el usuario desde la vista si lo deseas
+            )

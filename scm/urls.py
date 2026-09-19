@@ -19,4 +19,9 @@ urlpatterns = [
     path('movimientos/nuevo/', views.registrar_movimiento, name='registrar_movimiento'),
     # Rutas de Inventario
     path('inventario/', views.vista_inventario, name='vista_inventario'),
+    # Rutas para Pedidos (Fase 2)
+    path('pedidos/', views.lista_pedidos, name='lista_pedidos'),
+    path('pedidos/nuevo/', views.crear_pedido, name='crear_pedido'),
+    path('pedidos/editar/<int:id>/', views.editar_pedido, name='editar_pedido'),
+    path('pedidos/eliminar/<int:id>/', views.eliminar_pedido, name='eliminar_pedido'),
 ]

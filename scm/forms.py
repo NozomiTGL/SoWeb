@@ -1,5 +1,5 @@
 from django import forms
-from .models import Proveedor, Producto, MovimientoInventario
+from .models import Proveedor, Producto, MovimientoInventario, Pedido
 
 class ProveedorForm(forms.ModelForm):
     class Meta:
@@ -35,4 +35,19 @@ class MovimientoInventarioForm(forms.ModelForm):
             'tipo': forms.Select(attrs={'class': 'form-select bg-light'}),
             'cantidad': forms.NumberInput(attrs={'class': 'form-control bg-light', 'min': '1'}),
             'motivo': forms.Select(attrs={'class': 'form-select bg-light'}),
+        }
+
+class PedidoForm(forms.ModelForm):
+    class Meta:
+        model = Pedido
+        # No incluimos 'folio' porque se genera automáticamente
+        fields = ['producto', 'cantidad', 'tipo', 'proveedor', 'fecha', 'estado', 'notas']
+        widgets = {
+            'producto': forms.Select(attrs={'class': 'form-select bg-light'}),
+            'cantidad': forms.NumberInput(attrs={'class': 'form-control bg-light', 'min': '1'}),
+            'tipo': forms.Select(attrs={'class': 'form-select bg-light'}),
+            'proveedor': forms.Select(attrs={'class': 'form-select bg-light'}),
+            'fecha': forms.DateInput(attrs={'class': 'form-control bg-light', 'type': 'date'}),
+            'estado': forms.Select(attrs={'class': 'form-select bg-light'}),
+            'notas': forms.Textarea(attrs={'class': 'form-control bg-light', 'rows': 3, 'placeholder': 'Notas adicionales...'}),
         }
