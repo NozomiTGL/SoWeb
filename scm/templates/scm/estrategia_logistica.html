@@ -1,0 +1,92 @@
+{% extends 'crm/base.html' %}
+
+{% block content %}
+<div class="container-fluid py-4">
+    <div class="mb-4">
+        <h3 class="fw-bold text-dark mb-0"><i class="bi bi-diagram-2-fill text-primary me-2"></i>Comparativa Push vs Pull</h3>
+        <p class="text-muted small">Visualiza tus productos separados por estrategia logística.</p>
+    </div>
+
+    <div class="row g-4">
+        <!-- Columna PUSH -->
+        <div class="col-lg-6">
+            <div class="card border-0 shadow-sm rounded-4 h-100 border-top border-warning border-4">
+                <div class="card-header bg-white border-0 pt-4 pb-0 d-flex justify-content-between align-items-center">
+                    <h5 class="fw-bold text-dark mb-0">
+                        <i class="bi bi-box-seam text-warning me-2"></i>Estrategia PUSH
+                    </h5>
+                    <span class="badge bg-warning-subtle text-warning fs-6 px-3 rounded-pill">{{ total_push }} servicios</span>
+                </div>
+                <div class="card-body">
+                    <p class="text-muted small mb-4">Se genera pedido de reposición automáticamente cuando el stock llega al límite mínimo (Producción/compra anticipada).</p>
+                    
+                    <div class="table-responsive">
+                        <table class="table table-hover align-middle">
+                            <thead class="table-light">
+                                <tr>
+                                    <th>Producto</th>
+                                    <th class="text-center">Stock</th>
+                                    <th class="text-center">Min.</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for item in productos_push %}
+                                <tr>
+                                    <td class="fw-medium">{{ item.nombre }}</td>
+                                    <td class="text-center fw-bold">{{ item.stock_actual }}</td>
+                                    <td class="text-center text-muted">{{ item.stock_minimo }}</td>
+                                </tr>
+                                {% empty %}
+                                <tr>
+                                    <td colspan="3" class="text-center py-4 text-muted small">No hay servicios PUSH</td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Columna PULL -->
+        <div class="col-lg-6">
+            <div class="card border-0 shadow-sm rounded-4 h-100 border-top border-info border-4">
+                <div class="card-header bg-white border-0 pt-4 pb-0 d-flex justify-content-between align-items-center">
+                    <h5 class="fw-bold text-dark mb-0">
+                        <i class="bi bi-box-arrow-in-down text-info me-2"></i>Estrategia PULL
+                    </h5>
+                    <span class="badge bg-info-subtle text-info fs-6 px-3 rounded-pill">{{ total_pull }} servicios</span>
+                </div>
+                <div class="card-body">
+                    <p class="text-muted small mb-4">Se genera pedido a proveedores únicamente bajo demanda real del cliente. No se mantiene stock anticipado.</p>
+                    
+                    <div class="table-responsive">
+                        <table class="table table-hover align-middle">
+                            <thead class="table-light">
+                                <tr>
+                                    <th>Producto</th>
+                                    <th class="text-center">Stock</th>
+                                    <th class="text-center">Min.</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for item in productos_pull %}
+                                <tr>
+                                    <td class="fw-medium">{{ item.nombre }}</td>
+                                    <td class="text-center fw-bold">{{ item.stock_actual }}</td>
+                                    <td class="text-center text-muted">{{ item.stock_minimo }}</td>
+                                </tr>
+                                {% empty %}
+                                <tr>
+                                    <td colspan="3" class="text-center py-4 text-muted small">No hay servicios PULL</td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

@@ -3,6 +3,7 @@ from django.contrib.auth.decorators import login_required
 from django.contrib import messages
 from .models import Proveedor, Producto, MovimientoInventario, Pedido
 from .forms import ProveedorForm, ProductoForm, MovimientoInventarioForm, PedidoForm
+from django.db.models import F
 
 # ==========================================
 # VISTAS DE PROVEEDORES
@@ -233,3 +234,47 @@ def eliminar_pedido(request, id):
     return render(request, 'scm/confirmar_eliminacion.html', {
         'objeto': f"Pedido {pedido.folio}", 'tipo': 'Pedido', 'url_cancelar': 'lista_pedidos'
     })
+
+@login_required
+def estrategia_logistica(request):
+    """Pantalla 10: Comparativa Push vs Pull."""
+    productos_push = Producto.objects.filter(estrategia='PUSH').order_by('nombre')
+    productos_pull = Producto.objects.filter(estrategia='PULL').order_by('nombre')
+    
+    context = {
+        'productos_push': productos_push,
+        'productos_pull': productos_pull,
+        'total_push': productos_push.count(),
+        'total_pull': productos_pull.count(),
+    }
+    return render(request, 'scm/estrategia_logistica.html', context)
+
+# ==========================================
+# DASHBOARD / REPORTES (Fase 2)
+# ==========================================
+@login_required
+def dashboard_scm(request):
+    """Pantalla 14: Reportes SCM (Dashboard visual)."""
+    # 1. Métricas Globales (KPIs)
+    total_productos = Producto.objects.count()
+    total_proveedores = Proveedor.objects.count()
+    pedidos_proceso = Pedido.objects.filter(estado__in=['Pendiente', 'En proceso']).count()
+    
+    # 2. Inventario Crítico (Stock actual menor o igual al mínimo)
+    inventario_critico = Producto.objects.filter(stock_actual__lte=F('stock_minimo')).order_by('stock_actual')
+    total_stock_bajo = inventario_critico.count()
+
+    # 3. Datos para la Gráfica de Estrategia
+    total_push = Producto.objects.filter(estrategia='PUSH').count()
+    total_pull = Producto.objects.filter(estrategia='PULL').count()
+
+    context = {
+        'total_productos': total_productos,
+        'total_proveedores': total_proveedores,
+        'pedidos_proceso': pedidos_proceso,
+        'total_stock_bajo': total_stock_bajo,
+        'inventario_critico': inventario_critico,
+        'total_push': total_push,
+        'total_pull': total_pull,
+    }
+    return render(request, 'scm/dashboard.html', context)
