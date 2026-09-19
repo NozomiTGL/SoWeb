@@ -1,4 +1,6 @@
 from django.db import models
+from django.contrib.auth.models import User
+from django.utils import timezone
 
 class Proveedor(models.Model):
     """
@@ -57,3 +59,59 @@ class Producto(models.Model):
 
     def __str__(self):
         return f"{self.nombre} (Stock: {self.stock_actual})"
+
+
+class MovimientoInventario(models.Model):
+    """
+    Registra las entradas y salidas de capacidad operativa.
+    Automatiza la actualización del stock actual del producto asociado.
+    """
+    TIPO_CHOICES = [
+        ('ENTRADA', 'Entrada'),
+        ('SALIDA', 'Salida'),
+    ]
+
+    MOTIVO_CHOICES = [
+        ('venta', 'Venta de Proyecto / Contratación'),
+        ('liberacion', 'Liberación de Recursos / Proyecto Terminado'),
+        ('reposicion', 'Reposición / Aumento de Capacidad'),
+        ('ajuste', 'Ajuste Manual'),
+    ]
+
+    producto = models.ForeignKey(
+        Producto, 
+        on_delete=models.CASCADE, 
+        related_name='movimientos',
+        verbose_name="Servicio / Producto"
+    )
+    tipo = models.CharField(max_length=10, choices=TIPO_CHOICES, verbose_name="Tipo de movimiento")
+    cantidad = models.PositiveIntegerField(verbose_name="Cantidad")
+    motivo = models.CharField(max_length=20, choices=MOTIVO_CHOICES, verbose_name="Motivo")
+    fecha = models.DateTimeField(default=timezone.now, verbose_name="Fecha del movimiento")
+    usuario = models.ForeignKey(User, on_delete=models.SET_NULL, null=True, verbose_name="Usuario responsable")
+
+    class Meta:
+        verbose_name = "Movimiento de Inventario"
+        verbose_name_plural = "Movimientos de Inventario"
+        ordering = ['-fecha']
+
+    def __str__(self):
+        return f"{self.tipo} - {self.producto.nombre} ({self.cantidad})"
+
+    def save(self, *args, **kwargs):
+        """
+        Sobrescribimos el método save para actualizar el stock del producto
+        automáticamente al registrar un movimiento nuevo.
+        """
+        # Solo actualizamos el stock si es un registro nuevo (no una edición)
+        is_new = self.pk is None 
+        
+        super().save(*args, **kwargs) # Guardamos el movimiento primero
+
+        if is_new:
+            if self.tipo == 'ENTRADA':
+                self.producto.stock_actual += self.cantidad
+            elif self.tipo == 'SALIDA':
+                self.producto.stock_actual -= self.cantidad
+            
+            self.producto.save() # Guardamos el nuevo stock en el producto
