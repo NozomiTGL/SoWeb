@@ -34,6 +34,12 @@ class Producto(models.Model):
         ('soporte', 'Horas de Soporte / Mantenimiento'),
     ]
 
+    # Opciones para Estrategia Logística
+    ESTRATEGIA_CHOICES = [
+        ('PUSH', 'PUSH (Producción/compra anticipada)'),
+        ('PULL', 'PULL (Según demanda real)'),
+    ]
+
     nombre = models.CharField(max_length=150, verbose_name="Nombre del servicio/producto")
     descripcion = models.TextField(verbose_name="Descripción")
     categoria = models.CharField(max_length=50, choices=CATEGORIA_CHOICES, verbose_name="Categoría")
@@ -41,6 +47,14 @@ class Producto(models.Model):
     # Control de capacidad operativa (Inventario)
     stock_actual = models.IntegerField(default=0, verbose_name="Stock actual (Capacidad disponible)")
     stock_minimo = models.IntegerField(default=0, verbose_name="Stock mínimo (Punto de reorden)")
+    
+    # Estrategia Logística
+    estrategia = models.CharField(
+        max_length=10, 
+        choices=ESTRATEGIA_CHOICES, 
+        default='PUSH', 
+        verbose_name="Estrategia Logística"
+    )
     
     # Llave foránea hacia el modelo Proveedor
     proveedor = models.ForeignKey(
@@ -115,3 +129,4 @@ class MovimientoInventario(models.Model):
                 self.producto.stock_actual -= self.cantidad
             
             self.producto.save() # Guardamos el nuevo stock en el producto
+

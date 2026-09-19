@@ -1,0 +1,57 @@
+{% extends 'crm/base.html' %}
+
+{% block content %}
+<div class="container-fluid py-4">
+    <div class="row justify-content-center">
+        <div class="col-md-8 col-lg-6">
+            
+            <div class="mb-4 text-center">
+                <h3 class="fw-bold text-dark mb-0">{{ titulo }}</h3>
+                <p class="text-muted small">El stock se actualizará automáticamente al guardar.</p>
+            </div>
+
+            <div class="card soweb-card border-0 shadow-sm rounded-4 p-4">
+                <form method="post">
+                    {% csrf_token %}
+                    
+                    <div class="mb-3">
+                        <label class="form-label text-secondary fw-semibold small">Servicio / Producto afectado *</label>
+                        {{ form.producto }}
+                    </div>
+
+                    <div class="row">
+                        <div class="col-md-6 mb-3">
+                            <label class="form-label text-secondary fw-semibold small">Tipo de Movimiento *</label>
+                            {{ form.tipo }}
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            <label class="form-label text-secondary fw-semibold small">Cantidad *</label>
+                            {{ form.cantidad }}
+                        </div>
+                    </div>
+
+                    <div class="mb-4">
+                        <label class="form-label text-secondary fw-semibold small">Motivo de la operación *</label>
+                        {{ form.motivo }}
+                    </div>
+
+                    <div class="alert alert-info border-0 bg-info-subtle d-flex align-items-center mb-4">
+                        <i class="bi bi-info-circle-fill text-info fs-4 me-3"></i>
+                        <p class="mb-0 small text-dark">
+                            <strong>Nota:</strong> Si seleccionas <em>Salida</em>, el sistema verificará que exista capacidad suficiente.
+                        </p>
+                    </div>
+
+                    <div class="d-flex justify-content-end gap-2 border-top pt-4">
+                        <a href="{% url 'lista_movimientos' %}" class="btn btn-light fw-semibold px-4">Cancelar</a>
+                        <button type="submit" class="btn btn-soweb-primary fw-semibold px-4">
+                            <i class="bi bi-check-lg me-1"></i> Confirmar Movimiento
+                        </button>
+                    </div>
+                </form>
+            </div>
+
+        </div>
+    </div>
+</div>
+{% endblock %}

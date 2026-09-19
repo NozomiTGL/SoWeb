@@ -1,0 +1,77 @@
+{% extends 'crm/base.html' %}
+
+{% block content %}
+<div class="container-fluid py-4">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <div>
+            <h3 class="fw-bold text-dark mb-0"><i class="bi bi-box2-heart-fill text-primary me-2"></i>Inventario</h3>
+            <p class="text-muted small">Consulta general de existencias y estado de stock.</p>
+        </div>
+    </div>
+
+    <!-- Barra de búsqueda rápida (Opcional, para simular la interfaz) -->
+    <div class="card bg-light border-0 shadow-sm rounded-4 mb-4">
+        <div class="card-body py-3">
+            <div class="row">
+                <div class="col-md-6">
+                    <div class="input-group">
+                        <span class="input-group-text bg-white border-0"><i class="bi bi-search text-muted"></i></span>
+                        <input type="text" class="form-control border-0 shadow-none" placeholder="Buscar producto...">
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="card soweb-card border-0 shadow-sm rounded-4">
+        <div class="card-body p-0">
+            <div class="table-responsive">
+                <table class="table table-hover align-middle mb-0">
+                    <thead class="table-light">
+                        <tr>
+                            <th class="px-4 py-3">Producto / Servicio</th>
+                            <th class="py-3 text-center">Stock actual</th>
+                            <th class="py-3 text-center">Stock mínimo</th>
+                            <th class="py-3">Estado</th>
+                            <th class="py-3 text-center pe-4">Acciones</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for producto in productos %}
+                        <tr>
+                            <td class="px-4 py-3 fw-medium text-dark">{{ producto.nombre }}</td>
+                            <td class="py-3 text-center fw-bold">{{ producto.stock_actual }}</td>
+                            <td class="py-3 text-center text-muted">{{ producto.stock_minimo }}</td>
+                            <td class="py-3">
+                                {% if producto.stock_actual <= producto.stock_minimo %}
+                                    <span class="text-danger fw-semibold d-flex align-items-center gap-1">
+                                        <i class="bi bi-arrow-down-circle-fill"></i> Stock bajo
+                                    </span>
+                                {% else %}
+                                    <span class="text-success fw-semibold d-flex align-items-center gap-1">
+                                        <i class="bi bi-check-circle-fill"></i> Normal
+                                    </span>
+                                {% endif %}
+                            </td>
+                            <td class="py-3 text-center pe-4">
+                                <!-- Este botón filtrará los movimientos de este producto específico -->
+                                <a href="{% url 'lista_movimientos' %}?producto={{ producto.id }}" class="btn btn-sm btn-light text-primary" title="Ver movimientos">
+                                    <i class="bi bi-search"></i>
+                                </a>
+                            </td>
+                        </tr>
+                        {% empty %}
+                        <tr>
+                            <td colspan="5" class="text-center py-5 text-muted">
+                                <i class="bi bi-inbox fs-1 d-block mb-2"></i>
+                                No hay productos en el inventario.
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

@@ -1,8 +1,8 @@
 from django.shortcuts import render, redirect, get_object_or_404
 from django.contrib.auth.decorators import login_required
 from django.contrib import messages
-from .models import Proveedor, Producto
-from .forms import ProveedorForm, ProductoForm
+from .models import Proveedor, Producto, MovimientoInventario
+from .forms import ProveedorForm, ProductoForm, MovimientoInventarioForm
 
 # ==========================================
 # VISTAS DE PROVEEDORES
@@ -110,3 +110,60 @@ def eliminar_producto(request, id):
     return render(request, 'scm/confirmar_eliminacion.html', {
         'objeto': producto.nombre, 'tipo': 'Servicio', 'url_cancelar': 'lista_productos'
     })
+
+
+# ==========================================
+# MOVIMIENTOS DE INVENTARIO (Fase 2)
+# ==========================================
+@login_required
+def lista_movimientos(request):
+    """Muestra el historial de entradas y salidas con filtros de búsqueda."""
+    movimientos = MovimientoInventario.objects.all().select_related('producto', 'usuario')
+    productos = Producto.objects.all().order_by('nombre') # Necesario para llenar el desplegable de filtros
+    
+    # 1. Capturar los parámetros que vienen de la URL (ej. ?tipo=ENTRADA&producto=2)
+    filtro_tipo = request.GET.get('tipo')
+    filtro_producto = request.GET.get('producto')
+
+    # 2. Aplicar los filtros si el usuario seleccionó alguno
+    if filtro_tipo:
+        movimientos = movimientos.filter(tipo=filtro_tipo)
+    if filtro_producto:
+        movimientos = movimientos.filter(producto_id=filtro_producto)
+        
+    context = {
+        'movimientos': movimientos,
+        'productos': productos,
+        'filtro_tipo': filtro_tipo,
+        'filtro_producto': filtro_producto,
+    }
+    
+    return render(request, 'scm/lista_movimientos.html', context)
+
+@login_required
+def registrar_movimiento(request):
+    """Registra una entrada o salida y actualiza el stock automáticamente."""
+    if request.method == 'POST':
+        form = MovimientoInventarioForm(request.POST)
+        if form.is_valid():
+            # commit=False nos permite modificar el objeto antes de guardarlo en la BD
+            movimiento = form.save(commit=False)
+            movimiento.usuario = request.user 
+            
+            # Candado de seguridad: No permitir salidas mayores al stock disponible
+            if movimiento.tipo == 'SALIDA' and movimiento.cantidad > movimiento.producto.stock_actual:
+                messages.error(request, f'Error: No hay suficiente capacidad. Stock actual de {movimiento.producto.nombre}: {movimiento.producto.stock_actual}')
+            else:
+                movimiento.save() # Al hacer .save(), se ejecuta la resta/suma matemática que pusimos en models.py
+                messages.success(request, 'Movimiento registrado. El stock del servicio ha sido actualizado.')
+                return redirect('lista_movimientos')
+    else:
+        form = MovimientoInventarioForm()
+    
+    return render(request, 'scm/form_movimiento.html', {'form': form, 'titulo': 'Registrar Movimiento'})
+
+@login_required
+def vista_inventario(request):
+    """Pantalla 6: Consulta de existencias y estado de stock."""
+    productos = Producto.objects.all().order_by('nombre')
+    return render(request, 'scm/inventario.html', {'productos': productos})

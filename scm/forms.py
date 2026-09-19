@@ -1,5 +1,5 @@
 from django import forms
-from .models import Proveedor, Producto
+from .models import Proveedor, Producto, MovimientoInventario
 
 class ProveedorForm(forms.ModelForm):
     class Meta:
@@ -15,7 +15,7 @@ class ProveedorForm(forms.ModelForm):
 class ProductoForm(forms.ModelForm):
     class Meta:
         model = Producto
-        fields = ['nombre', 'descripcion', 'categoria', 'stock_actual', 'stock_minimo', 'proveedor', 'costo_unitario']
+        fields = ['nombre', 'descripcion', 'categoria', 'stock_actual', 'stock_minimo', 'proveedor', 'costo_unitario', 'estrategia']
         widgets = {
             'nombre': forms.TextInput(attrs={'class': 'form-control bg-light', 'placeholder': 'Ej. Hosting Básico'}),
             'descripcion': forms.Textarea(attrs={'class': 'form-control bg-light', 'rows': 2}),
@@ -23,5 +23,16 @@ class ProductoForm(forms.ModelForm):
             'stock_actual': forms.NumberInput(attrs={'class': 'form-control bg-light'}),
             'stock_minimo': forms.NumberInput(attrs={'class': 'form-control bg-light'}),
             'proveedor': forms.Select(attrs={'class': 'form-select bg-light'}),
-            'costo_unitario': forms.NumberInput(attrs={'class': 'form-control bg-light', 'step': '0.01'}),
+            'costo_unitario': forms.NumberInput(attrs={'class': 'form-control bg-light', 'step': '0.01'}),'estrategia': forms.Select(attrs={'class': 'form-select'}),
+        }
+
+class MovimientoInventarioForm(forms.ModelForm):
+    class Meta:
+        model = MovimientoInventario
+        fields = ['producto', 'tipo', 'cantidad', 'motivo']
+        widgets = {
+            'producto': forms.Select(attrs={'class': 'form-select bg-light'}),
+            'tipo': forms.Select(attrs={'class': 'form-select bg-light'}),
+            'cantidad': forms.NumberInput(attrs={'class': 'form-control bg-light', 'min': '1'}),
+            'motivo': forms.Select(attrs={'class': 'form-select bg-light'}),
         }
