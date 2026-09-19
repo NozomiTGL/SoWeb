@@ -49,3 +49,64 @@ def crear_producto(request):
         form = ProductoForm()
     
     return render(request, 'scm/form_producto.html', {'form': form, 'titulo': 'Nuevo Producto'})
+
+# ==========================================
+# EDICIÓN Y ELIMINACIÓN DE PROVEEDORES
+# ==========================================
+@login_required
+def editar_proveedor(request, id):
+    proveedor = get_object_or_404(Proveedor, id=id)
+    if request.method == 'POST':
+        form = ProveedorForm(request.POST, instance=proveedor)
+        if form.is_valid():
+            form.save()
+            messages.success(request, 'Proveedor actualizado con éxito.')
+            return redirect('lista_proveedores')
+    else:
+        form = ProveedorForm(instance=proveedor)
+    
+    return render(request, 'scm/form_proveedor.html', {'form': form, 'titulo': 'Editar Proveedor'})
+
+@login_required
+def eliminar_proveedor(request, id):
+    proveedor = get_object_or_404(Proveedor, id=id)
+    if request.method == 'POST':
+        if proveedor.productos.exists():
+            messages.error(request, 'No puedes eliminar este proveedor porque tiene servicios asociados.')
+        else:
+            proveedor.delete()
+            messages.success(request, 'Proveedor eliminado con éxito.')
+        return redirect('lista_proveedores')
+    
+    return render(request, 'scm/confirmar_eliminacion.html', {
+        'objeto': proveedor.nombre, 'tipo': 'Proveedor', 'url_cancelar': 'lista_proveedores'
+    })
+
+# ==========================================
+# EDICIÓN Y ELIMINACIÓN DE PRODUCTOS/SERVICIOS
+# ==========================================
+@login_required
+def editar_producto(request, id):
+    producto = get_object_or_404(Producto, id=id)
+    if request.method == 'POST':
+        form = ProductoForm(request.POST, instance=producto)
+        if form.is_valid():
+            form.save()
+            messages.success(request, 'Servicio actualizado con éxito.')
+            return redirect('lista_productos')
+    else:
+        form = ProductoForm(instance=producto)
+    
+    return render(request, 'scm/form_producto.html', {'form': form, 'titulo': 'Editar Servicio'})
+
+@login_required
+def eliminar_producto(request, id):
+    producto = get_object_or_404(Producto, id=id)
+    if request.method == 'POST':
+        producto.delete()
+        messages.success(request, 'Servicio eliminado con éxito.')
+        return redirect('lista_productos')
+    
+    return render(request, 'scm/confirmar_eliminacion.html', {
+        'objeto': producto.nombre, 'tipo': 'Servicio', 'url_cancelar': 'lista_productos'
+    })

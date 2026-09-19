@@ -1,0 +1,72 @@
+{% extends 'crm/base.html' %}
+
+{% block content %}
+<div class="container-fluid py-4">
+    <div class="row justify-content-center">
+        <div class="col-md-10 col-lg-8">
+            
+            <div class="mb-4 text-center">
+                <h3 class="fw-bold text-dark mb-0">{{ titulo }}</h3>
+                <p class="text-muted small">Configura el servicio, su proveedor de infraestructura y su capacidad límite.</p>
+            </div>
+
+            <div class="card soweb-card border-0 shadow-sm rounded-4 p-4">
+                <form method="post">
+                    {% csrf_token %}
+                    
+                    <div class="row">
+                        <div class="col-md-8 mb-3">
+                            <label class="form-label text-secondary fw-semibold small">Nombre del Servicio / Producto *</label>
+                            {{ form.nombre }}
+                        </div>
+                        <div class="col-md-4 mb-3">
+                            <label class="form-label text-secondary fw-semibold small">Categoría *</label>
+                            {{ form.categoria }}
+                        </div>
+                    </div>
+
+                    <div class="mb-3">
+                        <label class="form-label text-secondary fw-semibold small">Descripción</label>
+                        {{ form.descripcion }}
+                    </div>
+
+                    <div class="row bg-light rounded-3 p-3 mb-4 mx-0">
+                        <h6 class="text-dark fw-bold mb-3"><i class="bi bi-box-seam me-2"></i>Logística y Capacidad</h6>
+                        
+                        <div class="col-md-6 mb-3">
+                            <label class="form-label text-secondary fw-semibold small">Proveedor de Infraestructura *</label>
+                            {{ form.proveedor }}
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            <label class="form-label text-secondary fw-semibold small">Costo Unitario *</label>
+                            <div class="input-group">
+                                <span class="input-group-text border-0 bg-white">$</span>
+                                {{ form.costo_unitario }}
+                            </div>
+                        </div>
+
+                        <div class="col-md-6 mb-2">
+                            <label class="form-label text-secondary fw-semibold small">Stock Actual (Capacidad) *</label>
+                            {{ form.stock_actual }}
+                            <small class="text-muted" style="font-size: 0.75rem;">Ranuras o licencias disponibles en este momento.</small>
+                        </div>
+                        <div class="col-md-6 mb-2">
+                            <label class="form-label text-secondary fw-semibold small">Stock Mínimo (Alerta) *</label>
+                            {{ form.stock_minimo }}
+                            <small class="text-muted" style="font-size: 0.75rem;">Punto en el que se debe notificar para adquirir más capacidad.</small>
+                        </div>
+                    </div>
+
+                    <div class="d-flex justify-content-end gap-2 pt-2">
+                        <a href="{% url 'lista_productos' %}" class="btn btn-light fw-semibold px-4">Cancelar</a>
+                        <button type="submit" class="btn btn-soweb-primary fw-semibold px-4">
+                            <i class="bi bi-save me-1"></i> Guardar Servicio
+                        </button>
+                    </div>
+                </form>
+            </div>
+
+        </div>
+    </div>
+</div>
+{% endblock %}

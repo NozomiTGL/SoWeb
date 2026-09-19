@@ -4,7 +4,7 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>SoWeb CRM</title>
+    <title>SoWeb CRM & SCM</title>
     
     {# Carga de librerías CSS externas (Bootstrap 5 e Iconos) #}
     <link
@@ -31,7 +31,7 @@
           href="{% url 'dashboard' %}"
         >
           <i class="bi bi-box-seam-fill text-primary"></i>
-          <span>SoWeb <span class="text-primary fs-6">CRM</span></span>
+          <span>SoWeb <span class="text-primary fs-6">CRM & SCM</span></span>
         </a>
 
         {# Botón Hamburguesa para dispositivos móviles #}
@@ -44,28 +44,40 @@
           <span class="navbar-toggler-icon"></span>
         </button>
 
-        {# Enlaces de la aplicación #}
+        {# Enlaces de la aplicación modulares (CRM y SCM) #}
         <div class="collapse navbar-collapse" id="navbarNav">
           <ul class="navbar-nav me-auto ms-lg-4">
+            
             <li class="nav-item">
               <a class="nav-link px-3" href="{% url 'dashboard' %}">
                 <i class="bi bi-grid-1x2-fill me-1"></i> Dashboard
               </a>
             </li>
-            <li class="nav-item">
-              <a class="nav-link px-3" href="{% url 'lista_clientes' %}">
-                <i class="bi bi-people-fill me-1"></i> Clientes
+
+            <!-- Dropdown Módulo CRM -->
+            <li class="nav-item dropdown">
+              <a class="nav-link dropdown-toggle px-3" href="#" id="navbarDropdownCRM" role="button" data-bs-toggle="dropdown" aria-expanded="false">
+                <i class="bi bi-people-fill me-1"></i> Módulo CRM
               </a>
+              <ul class="dropdown-menu shadow-sm border-0" aria-labelledby="navbarDropdownCRM">
+                <li><a class="dropdown-item" href="{% url 'lista_clientes' %}"><i class="bi bi-person-badge text-primary me-2"></i>Cartera de Clientes</a></li>
+                <li><a class="dropdown-item" href="{% url 'mi_actividad' %}"><i class="bi bi-person-lines-fill text-primary me-2"></i>Mi Actividad</a></li>
+                <li><a class="dropdown-item" href="{% url 'reportes_metricas' %}"><i class="bi bi-bar-chart-line-fill text-primary me-2"></i>Reportes de Ventas</a></li>
+              </ul>
             </li>
-            <li class="nav-item">
-              <a class="nav-link px-3" href="{% url 'mi_actividad' %}">
-                <i class="bi bi-person-lines-fill me-1"></i> Mi Actividad
+
+            <!-- Dropdown Módulo SCM -->
+            <li class="nav-item dropdown">
+              <a class="nav-link dropdown-toggle px-3" href="#" id="navbarDropdownSCM" role="button" data-bs-toggle="dropdown" aria-expanded="false">
+                <i class="bi bi-box-seam-fill me-1"></i> Módulo SCM
               </a>
-            </li>
-            <li class="nav-item">
-              <a class="nav-link px-3" href="{% url 'reportes_metricas' %}">
-                <i class="bi bi-bar-chart-line-fill me-1"></i> Reportes
-              </a>
+              <ul class="dropdown-menu shadow-sm border-0" aria-labelledby="navbarDropdownSCM">
+                <li><a class="dropdown-item" href="{% url 'lista_productos' %}"><i class="bi bi-hdd-network text-primary me-2"></i>Catálogo de Servicios</a></li>
+                <li><a class="dropdown-item" href="{% url 'lista_proveedores' %}"><i class="bi bi-building text-primary me-2"></i>Proveedores / Infra.</a></li>
+                <li><hr class="dropdown-divider"></li>
+                <!-- Esta opción de inventario está inactiva por ahora, la usaremos en la Fase 2 -->
+                <li><span class="dropdown-item text-muted"><i class="bi bi-arrow-left-right me-2"></i>Movimientos (Próximamente)</span></li>
+              </ul>
             </li>
             
             {# Módulo de acceso restringido: Visible únicamente para administradores (Staff) #}
@@ -105,7 +117,6 @@
       
       {% comment %}
         Sistema global de mensajes de retroalimentación (Django Messages Framework).
-        Transforma etiquetas como 'error' a clases compatibles con Bootstrap ('danger').
       {% endcomment %}
       {% if messages %}
         <div class="row justify-content-center mb-4">
@@ -134,7 +145,7 @@
     {# Pie de página unificado #}
     <footer class="bg-white border-top py-3 mt-5">
       <div class="container text-center text-muted small">
-        © 2026 <strong>SoWeb</strong> • Plataforma Interna de Gestión de Clientes
+        © 2026 <strong>SoWeb</strong> • Plataforma Interna de Gestión Operativa
       </div>
     </footer>
 
