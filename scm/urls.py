@@ -33,6 +33,8 @@ urlpatterns = [
     path('logistica/', views.estrategia_logistica, name='estrategia_logistica'),
     # Ruta para el Dashboard
     path('dashboard/', views.dashboard_scm, name='dashboard_scm'),
+    # Ruta para Nivel de Madurez (Pantalla 13)
+    path('madurez/', views.nivel_madurez, name='nivel_madurez'),
 ]
 
 # ==========================================

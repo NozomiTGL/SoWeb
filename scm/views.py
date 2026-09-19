@@ -278,3 +278,13 @@ def dashboard_scm(request):
         'total_pull': total_pull,
     }
     return render(request, 'scm/dashboard.html', context)
+
+@login_required
+def nivel_madurez(request):
+    """Pantalla 13: Evaluación del avance en la implementación del SCM."""
+    # Esta vista es principalmente estática/informativa, 
+    # pero le pasamos un contexto por si luego quieres hacer los checks dinámicos.
+    context = {
+        'nivel_actual': 'Optimizado', # Ya terminamos todo uwu
+    }
+    return render(request, 'scm/nivel_madurez.html', context)

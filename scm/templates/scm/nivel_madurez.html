@@ -1,0 +1,88 @@
+{% extends 'crm/base.html' %}
+
+{% block content %}
+<div class="container-fluid py-4">
+    <div class="mb-4">
+        <h3 class="fw-bold text-dark mb-0"><i class="bi bi-award-fill text-primary me-2"></i>Nivel de madurez SCM</h3>
+        <p class="text-muted small">Evalúa el avance en la implementación de la cadena de suministro.</p>
+    </div>
+
+    <div class="row justify-content-center">
+        <div class="col-lg-8">
+            <div class="card border-0 shadow-sm rounded-4 p-4">
+                
+                <!-- Barra de niveles -->
+                <div class="d-flex justify-content-between align-items-center mb-5 position-relative">
+                    <!-- Línea conectora de fondo -->
+                    <div class="position-absolute top-50 start-0 w-100 translate-middle-y border-top border-2 border-success z-0"></div>
+                    
+                    <!-- Nivel 1 -->
+                    <div class="text-center position-relative z-1">
+                        <div class="bg-success text-white rounded-pill px-4 py-2 mb-2 shadow-sm border border-2 border-white">
+                            <span class="fw-bold">Inicial</span>
+                        </div>
+                        <span class="small text-muted fw-semibold">Procesos básicos.</span>
+                    </div>
+
+                    <!-- Nivel 2 -->
+                    <div class="text-center position-relative z-1">
+                        <div class="bg-success text-white rounded-pill px-4 py-2 mb-2 shadow-sm border border-2 border-white">
+                            <span class="fw-bold">En desarrollo</span>
+                        </div>
+                        <span class="small text-muted fw-semibold">Integración.</span>
+                    </div>
+
+                    <!-- Nivel 3 (Activo) -->
+                    <div class="text-center position-relative z-1">
+                        <div class="bg-primary text-white rounded-pill px-4 py-2 mb-2 shadow border border-2 border-white">
+                            <span class="fw-bold">Optimizado</span>
+                        </div>
+                        <span class="small text-dark fw-bold">Procesos avanzados.</span>
+                    </div>
+                </div>
+
+                <div class="row g-4">
+                    <!-- Checklist -->
+                    <div class="col-md-6">
+                        <h5 class="fw-bold text-dark mb-3">Checklist de avance</h5>
+                        <ul class="list-group list-group-flush border-0">
+                            <li class="list-group-item border-0 px-0 py-2 d-flex align-items-center">
+                                <i class="bi bi-check-square-fill text-success fs-5 me-3"></i>
+                                <span class="fw-medium text-dark">Productos y proveedores integrados</span>
+                            </li>
+                            <li class="list-group-item border-0 px-0 py-2 d-flex align-items-center">
+                                <i class="bi bi-check-square-fill text-success fs-5 me-3"></i>
+                                <span class="fw-medium text-dark">Inventario funcionando</span>
+                            </li>
+                            <li class="list-group-item border-0 px-0 py-2 d-flex align-items-center">
+                                <i class="bi bi-check-square-fill text-success fs-5 me-3"></i>
+                                <span class="fw-medium text-dark">Trazabilidad de movimientos</span>
+                            </li>
+                            <li class="list-group-item border-0 px-0 py-2 d-flex align-items-center">
+                                <i class="bi bi-check-square-fill text-success fs-5 me-3"></i>
+                                <span class="fw-medium text-dark">Estrategia Push/Pull implementada</span>
+                            </li>
+                            <li class="list-group-item border-0 px-0 py-2 d-flex align-items-center">
+                                <i class="bi bi-check-square-fill text-success fs-5 me-3"></i>
+                                <span class="fw-medium text-dark">Reportes y métricas</span>
+                            </li>
+                        </ul>
+                    </div>
+
+                    <!-- Descripción -->
+                    <div class="col-md-6">
+                        <h5 class="fw-bold text-dark mb-3">Descripción del nivel</h5>
+                        <div class="p-3 bg-light rounded-4 border border-light-subtle h-100">
+                            <p class="text-secondary small mb-0">
+                                <strong>Nivel actual: Optimizado.</strong><br><br>
+                                El sistema cuenta con todos los módulos principales funcionando en su totalidad. Se han integrado con éxito las automatizaciones de inventario, la gestión de reposición basada en estrategias logísticas (Push/Pull) y la trazabilidad en tiempo real a través de paneles gerenciales.
+                            </p>
+                        </div>
+                    </div>
+                </div>
+
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
