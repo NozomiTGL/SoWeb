@@ -13,6 +13,18 @@
             <div class="card soweb-card border-0 shadow-sm rounded-4 p-4">
                 <form method="post">
                     {% csrf_token %}
+
+                    <!-- BLOQUE DE ERRORES (Te avisará si te falta algo) -->
+                    {% if form.errors %}
+                        <div class="alert alert-danger shadow-sm border-0 rounded-4 mb-4">
+                            <h6 class="fw-bold mb-2"><i class="bi bi-exclamation-triangle-fill me-2"></i>Revisa los siguientes campos:</h6>
+                            <ul class="mb-0 small">
+                                {% for field, errors in form.errors.items %}
+                                    <li><strong>{{ field }}:</strong> {{ errors|striptags }}</li>
+                                {% endfor %}
+                            </ul>
+                        </div>
+                    {% endif %}
                     
                     <div class="row">
                         <div class="col-md-8 mb-3">
@@ -34,10 +46,16 @@
                         <h6 class="text-dark fw-bold mb-3"><i class="bi bi-box-seam me-2"></i>Logística y Capacidad</h6>
                         
                         <div class="col-md-6 mb-3">
+                            <label class="form-label text-secondary fw-semibold small">Estrategia Logística *</label>
+                            {{ form.estrategia }}
+                        </div>
+                        
+                        <div class="col-md-6 mb-3">
                             <label class="form-label text-secondary fw-semibold small">Proveedor de Infraestructura *</label>
                             {{ form.proveedor }}
                         </div>
-                        <div class="col-md-6 mb-3">
+                        
+                        <div class="col-md-4 mb-2">
                             <label class="form-label text-secondary fw-semibold small">Costo Unitario *</label>
                             <div class="input-group">
                                 <span class="input-group-text border-0 bg-white">$</span>
@@ -45,15 +63,17 @@
                             </div>
                         </div>
 
-                        <div class="col-md-6 mb-2">
-                            <label class="form-label text-secondary fw-semibold small">Stock Actual (Capacidad) *</label>
+                        <div class="col-md-4 mb-2">
+                            <label class="form-label text-secondary fw-semibold small">Stock Actual *</label>
                             {{ form.stock_actual }}
-                            <small class="text-muted" style="font-size: 0.75rem;">Ranuras o licencias disponibles en este momento.</small>
                         </div>
-                        <div class="col-md-6 mb-2">
-                            <label class="form-label text-secondary fw-semibold small">Stock Mínimo (Alerta) *</label>
+                        <div class="col-md-4 mb-2">
+                            <label class="form-label text-secondary fw-semibold small">Stock Mínimo *</label>
                             {{ form.stock_minimo }}
-                            <small class="text-muted" style="font-size: 0.75rem;">Punto en el que se debe notificar para adquirir más capacidad.</small>
+                        </div>
+                        
+                        <div class="col-12 mt-2">
+                            <small class="text-muted" style="font-size: 0.75rem;">* Para servicios bajo demanda (PULL), puedes dejar los stocks en 0.</small>
                         </div>
                     </div>
 
