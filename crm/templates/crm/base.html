@@ -68,14 +68,18 @@
 
             <!-- Dropdown Módulo SCM -->
             <li class="nav-item dropdown">
-              <a class="nav-link dropdown-toggle px-3" href="#" id="navbarDropdownSCM" role="button" data-bs-toggle="dropdown" aria-expanded="false">
+              <a class="nav-link dropdown-toggle px-3 position-relative" href="#" id="navbarDropdownSCM" role="button" data-bs-toggle="dropdown" aria-expanded="false">
                 <i class="bi bi-box-seam-fill me-1"></i> Módulo SCM
+                {% if total_criticos > 0 %}
+                  <span class="position-absolute top-0 start-100 translate-middle p-1 bg-danger border border-light rounded-circle">
+                    <span class="visually-hidden">Alertas de stock</span>
+                  </span>
+                {% endif %}
               </a>
               <ul class="dropdown-menu shadow-sm border-0" aria-labelledby="navbarDropdownSCM">
                 <li><a class="dropdown-item" href="{% url 'lista_productos' %}"><i class="bi bi-hdd-network text-primary me-2"></i>Catálogo de Servicios</a></li>
                 <li><a class="dropdown-item" href="{% url 'lista_proveedores' %}"><i class="bi bi-building text-primary me-2"></i>Proveedores / Infra.</a></li>
                 <li><hr class="dropdown-divider"></li>
-                <!-- Esta opción de inventario está inactiva por ahora, la usaremos en la Fase 2 -->
                 <li><a class="dropdown-item" href="{% url 'lista_movimientos' %}"><i class="bi bi-arrow-left-right text-primary me-2"></i>Movimientos / Inventario</a></li>
                 <li><a class="dropdown-item" href="{% url 'vista_inventario' %}"><i class="bi bi-box2-heart text-primary me-2"></i>Control de Inventario</a></li>
                 <li><a class="dropdown-item" href="{% url 'estrategia_logistica' %}"><i class="bi bi-diagram-2 text-primary me-2"></i>Logística (Push/Pull)</a></li>
@@ -99,6 +103,17 @@
           {# Menú de estado de usuario autenticado y botón de cierre de sesión #}
           {% if user.is_authenticated %}
           <div class="d-flex align-items-center gap-3">
+            
+            {# Botón de Notificaciones de Stock #}
+            {% if total_criticos > 0 %}
+              <button type="button" class="btn btn-outline-danger btn-sm rounded-pill position-relative px-3" data-bs-toggle="modal" data-bs-target="#modalAlertaStock">
+                <i class="bi bi-bell-fill me-1"></i> Stock Crítico
+                <span class="position-absolute top-0 start-100 translate-middle badge rounded-pill bg-danger">
+                  {{ total_criticos }}
+                </span>
+              </button>
+            {% endif %}
+
             <div class="text-end d-none d-lg-block">
               <small class="text-muted d-block leading-none">Usuario activo</small>
               <span class="text-white fw-semibold small">{{ user.username }}</span>
@@ -121,9 +136,7 @@
     {# Contenedor principal donde se inyectará el contenido dinámico de cada plantilla #}
     <main class="container flex-grow-1">
       
-      {% comment %}
-        Sistema global de mensajes de retroalimentación (Django Messages Framework).
-      {% endcomment %}
+      {# Sistema global de mensajes de retroalimentación (Django Messages Framework) #}
       {% if messages %}
         <div class="row justify-content-center mb-4">
           <div class="col-12">
@@ -148,6 +161,49 @@
       {% block content %} {% endblock %}
     </main>
 
+    {# POP-UP MODAL FLOTANTE DE ALERTA DE STOCK CRÍTICO #}
+    {% if total_criticos > 0 and user.is_authenticated %}
+    <div class="modal fade" id="modalAlertaStock" tabindex="-1" aria-labelledby="modalAlertaStockLabel" aria-hidden="true">
+      <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content border-0 shadow-lg rounded-4">
+          <div class="modal-header bg-danger text-white border-0 py-3">
+            <h5 class="modal-title fw-bold" id="modalAlertaStockLabel">
+              <i class="bi bi-exclamation-triangle-fill me-2"></i> ¡Alerta de Inventario Crítico!
+            </h5>
+            <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+          </div>
+          <div class="modal-body p-4">
+            <p class="text-secondary small mb-3">
+              Los siguientes servicios/productos alcanzaron o sobrepasaron su <strong>stock mínimo de seguridad</strong>. Se recomienda generar pedidos de reposición:
+            </p>
+            
+            <div class="list-group mb-3">
+              {% for prod in productos_criticos %}
+                <div class="list-group-item list-group-item-action d-flex justify-content-between align-items-center border-0 bg-light rounded-3 mb-2 p-3">
+                  <div>
+                    <h6 class="fw-bold mb-0 text-dark">{{ prod.nombre }}</h6>
+                    <small class="text-muted">Estrategia: {{ prod.estrategia }}</small>
+                  </div>
+                  <div class="text-end">
+                    <span class="badge bg-danger-subtle text-danger border border-danger-subtle px-2 py-1 fs-6">
+                      Stock: {{ prod.stock_actual }} / Min: {{ prod.stock_minimo }}
+                    </span>
+                  </div>
+                </div>
+              {% endfor %}
+            </div>
+          </div>
+          <div class="modal-footer border-0 bg-light rounded-bottom-4">
+            <button type="button" class="btn btn-light fw-semibold" data-bs-dismiss="modal">Entendido</button>
+            <a href="{% url 'crear_pedido' %}" class="btn btn-danger fw-semibold">
+              <i class="bi bi-cart-plus me-1"></i> Generar Pedido
+            </a>
+          </div>
+        </div>
+      </div>
+    </div>
+    {% endif %}
+
     {# Pie de página unificado #}
     <footer class="bg-white border-top py-3 mt-5">
       <div class="container text-center text-muted small">
@@ -155,7 +211,21 @@
       </div>
     </footer>
 
-    {# Script JS bundle de Bootstrap para componentes interactivos (dropdowns, modales, alertas) #}
+    {# Script JS bundle de Bootstrap para componentes interactivos #}
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+
+    {# Script para disparar automáticamente el Pop-Up al cargar la página si hay stock crítico #}
+    {% if total_criticos > 0 and user.is_authenticated %}
+    <script>
+      document.addEventListener("DOMContentLoaded", function () {
+        // Dispara la ventana modal automáticamente
+        var modalElement = document.getElementById('modalAlertaStock');
+        if (modalElement) {
+          var modal = new bootstrap.Modal(modalElement);
+          modal.show();
+        }
+      });
+    </script>
+    {% endif %}
   </body>
 </html>
