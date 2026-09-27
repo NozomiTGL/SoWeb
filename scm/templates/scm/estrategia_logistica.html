@@ -1,12 +1,47 @@
 {% extends 'crm/base.html' %}
 
 {% block content %}
+<!-- Importar Chart.js -->
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
 <div class="container-fluid py-4">
     <div class="mb-4">
         <h3 class="fw-bold text-dark mb-0"><i class="bi bi-diagram-2-fill text-primary me-2"></i>Comparativa Push vs Pull</h3>
-        <p class="text-muted small">Visualiza tus productos separados por estrategia logística.</p>
+        <p class="text-muted small">Visualiza tus productos separados por estrategia logística y sus niveles de stock.</p>
     </div>
 
+    <!-- NUEVA FILA: GRÁFICAS -->
+    <div class="row g-4 mb-4">
+        <!-- Gráfica de Pastel (Proporción de Estrategias) -->
+        <div class="col-lg-4">
+            <div class="card border-0 shadow-sm rounded-4 h-100">
+                <div class="card-header bg-white border-0 pt-4 pb-0 text-center">
+                    <h6 class="fw-bold text-dark mb-0">Distribución de Servicios</h6>
+                </div>
+                <div class="card-body d-flex justify-content-center align-items-center">
+                    <div style="width: 90%;">
+                        <canvas id="pastelChart"></canvas>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Gráfica de Barras (Niveles de Stock) -->
+        <div class="col-lg-8">
+            <div class="card border-0 shadow-sm rounded-4 h-100">
+                <div class="card-header bg-white border-0 pt-4 pb-0">
+                    <h6 class="fw-bold text-dark mb-0">Nivel de Stock por Servicio</h6>
+                </div>
+                <div class="card-body">
+                    <div style="height: 250px;">
+                        <canvas id="barrasChart"></canvas>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- FILA ORIGINAL: TABLAS DE DATOS -->
     <div class="row g-4">
         <!-- Columna PUSH -->
         <div class="col-lg-6">
@@ -89,4 +124,98 @@
         </div>
     </div>
 </div>
+
+<!-- SCRIPTS PARA RENDERIZAR LAS GRÁFICAS -->
+<script>
+    document.addEventListener("DOMContentLoaded", function() {
+        
+        // ==========================================
+        // 1. GRÁFICA DE PASTEL (Proporción Push vs Pull)
+        // ==========================================
+        const ctxPastel = document.getElementById('pastelChart').getContext('2d');
+        new Chart(ctxPastel, {
+            type: 'pie',
+            data: {
+                labels: ['PUSH (Anticipado)', 'PULL (Bajo Demanda)'],
+                datasets: [{
+                    data: [{{ total_push }}, {{ total_pull }}],
+                    backgroundColor: [
+                        'rgba(255, 193, 7, 0.8)', // Amarillo (Warning)
+                        'rgba(13, 202, 240, 0.8)' // Cyan (Info)
+                    ],
+                    borderColor: [
+                        'rgba(255, 193, 7, 1)',
+                        'rgba(13, 202, 240, 1)'
+                    ],
+                    borderWidth: 1
+                }]
+            },
+            options: {
+                responsive: true,
+                plugins: {
+                    legend: { position: 'bottom' }
+                }
+            }
+        });
+
+        // ==========================================
+        // 2. GRÁFICA DE BARRAS (Stock por Servicio)
+        // ==========================================
+        
+        // Construimos los arreglos de datos inyectando variables de Django a JS
+        const nombresServicios = [];
+        const stockServicios = [];
+        const coloresServicios = [];
+
+        // Extraemos los datos de PUSH (Barras Amarillas)
+        {% for item in productos_push %}
+            nombresServicios.push("{{ item.nombre|escapejs }}");
+            stockServicios.push({{ item.stock_actual }});
+            coloresServicios.push('rgba(255, 193, 7, 0.9)');
+        {% endfor %}
+        
+        // Extraemos los datos de PULL (Barras Azules)
+        {% for item in productos_pull %}
+            nombresServicios.push("{{ item.nombre|escapejs }}");
+            stockServicios.push({{ item.stock_actual }});
+            coloresServicios.push('rgba(13, 202, 240, 0.9)');
+        {% endfor %}
+
+        const ctxBarras = document.getElementById('barrasChart').getContext('2d');
+        new Chart(ctxBarras, {
+            type: 'bar',
+            data: {
+                labels: nombresServicios,
+                datasets: [{
+                    label: 'Stock Actual',
+                    data: stockServicios,
+                    backgroundColor: coloresServicios,
+                    borderRadius: 4,
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                scales: {
+                    y: { 
+                        beginAtZero: true,
+                        ticks: { stepSize: 1 } // Para que muestre números enteros
+                    }
+                },
+                plugins: {
+                    legend: { display: false }, // Ocultamos la leyenda superior para ahorrar espacio
+                    tooltip: {
+                        callbacks: {
+                            // Añade la etiqueta Push o Pull al pasar el mouse por encima de la barra
+                            afterLabel: function(context) {
+                                // Si el color es amarillo, es PUSH, si es cyan es PULL
+                                return context.dataset.backgroundColor[context.dataIndex] === 'rgba(255, 193, 7, 0.9)' ? 'Estrategia: PUSH' : 'Estrategia: PULL';
+                            }
+                        }
+                    }
+                }
+            }
+        });
+    });
+</script>
 {% endblock %}
