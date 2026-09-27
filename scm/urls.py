@@ -35,6 +35,7 @@ urlpatterns = [
     path('dashboard/', views.dashboard_scm, name='dashboard_scm'),
     # Ruta para Nivel de Madurez (Pantalla 13)
     path('madurez/', views.nivel_madurez, name='nivel_madurez'),
+    path('catalogo/', views.catalogo_clientes, name='catalogo_clientes'),
 ]
 
 # ==========================================

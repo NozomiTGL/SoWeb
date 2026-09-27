@@ -37,12 +37,15 @@ def es_admin(user):
 def dashboard(request):
     """
     Despliega el tablero principal con métricas clave del sistema.
-    
-    Filtra los datos según el rol del usuario autenticado:
-    - Administrador: Visualiza métricas globales.
-    - Vendedor: Visualiza métricas exclusivas de su cartera asignada.
     """
-    # Consulta condicional según el rol
+    # ==========================================
+    # MAGIA DE REDIRECCIÓN B2B
+    # Si el usuario es un Cliente, lo mandamos al Catálogo
+    # ==========================================
+    if hasattr(request.user, 'perfil_cliente'):
+        return redirect('catalogo_clientes')
+
+    # Consulta condicional según el rol (Staff / Vendedor)
     if request.user.is_staff:
         clientes_qs = Cliente.objects.all()
     else:
@@ -155,9 +158,7 @@ def exportar_clientes_csv(request):
 @login_required
 def crear_cliente(request):
     """
-    Procesa la creación de un nuevo cliente.
-    Si el usuario es vendedor, se le asigna automáticamente.
-    Si es administrador, permite seleccionar el vendedor responsable.
+    Procesa la creación de un nuevo cliente y le genera su cuenta de acceso automáticamente.
     """
     vendedores = User.objects.filter(is_active=True) if request.user.is_staff else None
 
@@ -176,8 +177,28 @@ def crear_cliente(request):
         else:
             vendedor_obj = request.user
 
+        # ==========================================
+        # NUEVO: CREACIÓN AUTOMÁTICA DE CUENTA PARA EL CLIENTE
+        # ==========================================
+        # Usamos su correo como username.
+        usuario_cliente, created = User.objects.get_or_create(
+            username=correo,
+            defaults={
+                'email': correo,
+                'first_name': nombre[:30],
+                'is_staff': False, # IMPORTANTE: Nos aseguramos de que NO tenga menú de admin
+            }
+        )
+        
+        # Le asignamos la contraseña genérica
+        if created:
+            usuario_cliente.set_password('SowebCliente2026')
+            usuario_cliente.save()
+
+        # Guardamos el cliente vinculándolo con la cuenta que acabamos de crear (usuario_login)
         Cliente.objects.create(
             vendedor=vendedor_obj,
+            usuario_login=usuario_cliente,
             nombre=nombre,
             correo=correo,
             telefono=telefono,
@@ -185,7 +206,8 @@ def crear_cliente(request):
             estado=estado,
             etapa_crm=etapa_crm
         )
-        messages.success(request, f'El cliente "{nombre}" ha sido registrado con éxito.')
+        
+        messages.success(request, f'El cliente "{nombre}" ha sido registrado. Su usuario es su correo y la contraseña "SowebCliente2026".')
         return redirect('lista_clientes')
     
     return render(request, 'crm/form_cliente.html', {
@@ -551,3 +573,4 @@ def registro_cliente_publico(request):
         return redirect('registro_cliente_publico')
 
     return render(request, 'crm/registro_publico.html')
+

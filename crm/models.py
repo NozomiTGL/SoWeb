@@ -33,6 +33,26 @@ class Cliente(models.Model):
         ('inactivo', 'Inactivo'),
     ]
 
+    # Vinculación con el usuario del sistema encargado del cliente (Vendedor)
+    vendedor = models.ForeignKey(
+        User, 
+        on_delete=models.SET_NULL, 
+        null=True, 
+        blank=True, 
+        related_name='clientes',
+        verbose_name="Vendedor asignado"
+    )
+
+    # NUEVO: Vinculación con la cuenta de acceso del propio CLIENTE
+    usuario_login = models.OneToOneField(
+        User,
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name='perfil_cliente',
+        verbose_name="Cuenta de Acceso (Cliente)"
+    )
+
     # Vinculación con el usuario del sistema encargado del cliente (Relación 1:N con User)
     vendedor = models.ForeignKey(
         User, 

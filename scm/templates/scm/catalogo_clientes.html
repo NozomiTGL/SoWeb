@@ -1,0 +1,36 @@
+{% extends 'crm/base_cliente.html' %}
+
+{% block content %}
+<div class="py-4">
+    <div class="text-center mb-5">
+        <h2 class="fw-bold text-dark">Catálogo de Servicios</h2>
+        <p class="text-muted">Soluciones tecnológicas a la medida de tu negocio.</p>
+    </div>
+
+    <div class="row g-4">
+        {% for producto in productos %}
+        <div class="col-md-6 col-lg-4">
+            <div class="card h-100 border-0 shadow-sm rounded-4 text-center p-3">
+                <div class="card-body">
+                    <div class="mb-3">
+                        <i class="bi bi-hdd-network text-primary" style="font-size: 3rem;"></i>
+                    </div>
+                    <h5 class="fw-bold text-dark mb-2">{{ producto.nombre }}</h5>
+                    <span class="badge bg-light text-secondary border mb-3">{{ producto.get_categoria_display }}</span>
+                    <p class="text-muted small mb-4">{{ producto.descripcion|default:"Servicio especializado para optimizar los recursos de tu empresa." }}</p>
+                    
+                    <button class="btn btn-outline-primary rounded-pill w-100 fw-semibold">
+                        <i class="bi bi-headset me-1"></i> Solicitar Información
+                    </button>
+                </div>
+            </div>
+        </div>
+        {% empty %}
+        <div class="col-12 text-center py-5">
+            <i class="bi bi-shop text-muted mb-3 d-block" style="font-size: 4rem;"></i>
+            <h5 class="text-muted">Actualmente estamos actualizando nuestro catálogo.</h5>
+        </div>
+        {% endfor %}
+    </div>
+</div>
+{% endblock %}
