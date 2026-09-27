@@ -174,30 +174,32 @@
           </div>
           <div class="modal-body p-4">
             <p class="text-secondary small mb-3">
-              Los siguientes servicios/productos alcanzaron o sobrepasaron su <strong>stock mínimo de seguridad</strong>. Se recomienda generar pedidos de reposición:
+              Los siguientes servicios alcanzaron su <strong>stock mínimo</strong>. Selecciona uno para generar su pedido de reposición:
             </p>
             
             <div class="list-group mb-3">
               {% for prod in productos_criticos %}
-                <div class="list-group-item list-group-item-action d-flex justify-content-between align-items-center border-0 bg-light rounded-3 mb-2 p-3">
+                <div class="list-group-item d-flex justify-content-between align-items-center border-0 bg-light rounded-3 mb-2 p-3 shadow-sm">
                   <div>
-                    <h6 class="fw-bold mb-0 text-dark">{{ prod.nombre }}</h6>
-                    <small class="text-muted">Estrategia: {{ prod.estrategia }}</small>
-                  </div>
-                  <div class="text-end">
+                    <h6 class="fw-bold mb-1 text-dark">{{ prod.nombre }}</h6>
                     <span class="badge bg-danger-subtle text-danger border border-danger-subtle px-2 py-1 fs-6">
                       Stock: {{ prod.stock_actual }} / Min: {{ prod.stock_minimo }}
                     </span>
+                  </div>
+                  <div class="text-end">
+                    <a href="{% url 'crear_pedido' %}?producto_id={{ prod.id }}" class="btn btn-sm btn-outline-danger rounded-pill fw-semibold shadow-sm">
+                      <i class="bi bi-cart-plus me-1"></i> Pedir
+                    </a>
                   </div>
                 </div>
               {% endfor %}
             </div>
           </div>
-          <div class="modal-footer border-0 bg-light rounded-bottom-4">
-            <button type="button" class="btn btn-light fw-semibold" data-bs-dismiss="modal">Entendido</button>
-            <a href="{% url 'crear_pedido' %}" class="btn btn-danger fw-semibold">
-              <i class="bi bi-cart-plus me-1"></i> Generar Pedido
-            </a>
+          <div class="modal-footer border-0 bg-light rounded-bottom-4 d-flex justify-content-between">
+            <button type="button" class="btn btn-light fw-semibold" data-bs-dismiss="modal">Cerrar</button>
+            <button type="button" id="btnSnoozeStock" class="btn btn-secondary fw-semibold">
+              <i class="bi bi-clock-history me-1"></i> Avísame en 2 min
+            </button>
           </div>
         </div>
       </div>
@@ -214,15 +216,41 @@
     {# Script JS bundle de Bootstrap para componentes interactivos #}
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
 
-    {# Script para disparar automáticamente el Pop-Up al cargar la página si hay stock crítico #}
+    {# Script Inteligente para el Pop-Up con función de Snooze (Silenciar) #}
     {% if total_criticos > 0 and user.is_authenticated %}
     <script>
       document.addEventListener("DOMContentLoaded", function () {
-        // Dispara la ventana modal automáticamente
         var modalElement = document.getElementById('modalAlertaStock');
         if (modalElement) {
           var modal = new bootstrap.Modal(modalElement);
-          modal.show();
+          
+          // 1. Revisar si el usuario le dio a "Avísame más tarde" recientemente
+          var snoozeUntil = localStorage.getItem('snoozeAlertaStock');
+          var now = new Date().getTime();
+          var shouldShow = true;
+          
+          // Si existe un registro de tiempo y el tiempo actual es menor, sigue silenciado
+          if (snoozeUntil && now < parseInt(snoozeUntil)) {
+              shouldShow = false; 
+          }
+
+          // Solo lo muestra automáticamente si no está silenciado
+          if (shouldShow) {
+            modal.show();
+          }
+
+          // 2. Darle vida al botón "Avísame en 2 min"
+          var btnSnooze = document.getElementById('btnSnoozeStock');
+          if (btnSnooze) {
+              btnSnooze.addEventListener('click', function() {
+                  // Calculamos la hora actual + 2 minutos (2 min * 60 seg * 1000 ms)
+                  var snoozeTime = new Date().getTime() + (2 * 60 * 1000); 
+                  localStorage.setItem('snoozeAlertaStock', snoozeTime);
+                  
+                  // Ocultamos el modal
+                  modal.hide();
+              });
+          }
         }
       });
     </script>

@@ -202,7 +202,12 @@ def crear_pedido(request):
             messages.success(request, 'Pedido registrado con éxito.')
             return redirect('lista_pedidos')
     else:
-        form = PedidoForm()
+        # MAGIA AQUÍ: Capturamos el ID si viene en la URL para pre-seleccionar el producto
+        producto_id = request.GET.get('producto_id')
+        if producto_id:
+            form = PedidoForm(initial={'producto': producto_id})
+        else:
+            form = PedidoForm()
     
     return render(request, 'scm/form_pedido.html', {'form': form, 'titulo': 'Nuevo Pedido'})
 
