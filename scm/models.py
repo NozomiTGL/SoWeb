@@ -133,26 +133,23 @@ class MovimientoInventario(models.Model):
             # 2. MAGIA SCM/ERP: AUTOMATIZACIÓN PUSH vs PULL
             # ==========================================
             if self.tipo == 'SALIDA' and self.producto.estrategia == 'PUSH':
-                # Revisamos si el stock cayó al límite crítico
+                # Si el stock cayó al límite crítico (menor o igual al stock mínimo)
                 if self.producto.stock_actual <= self.producto.stock_minimo:
                     
-                    # Candado: Evitamos hacer pedidos duplicados si ya pedimos y no ha llegado
-                    pedido_pendiente = Pedido.objects.filter(
-                        producto=self.producto,
-                        estado__in=['Pendiente', 'En proceso']
-                    ).exists()
+                    OBJETIVO_STOCK = 10  # Límite deseado de stock completo
                     
-                    if not pedido_pendiente:
-                        # Calculamos cuánto pedir (pedimos el equivalente al stock mínimo para resurtir)
-                        cantidad_a_pedir = self.producto.stock_minimo if self.producto.stock_minimo > 0 else 5
-                        
+                    # Calculamos cuántas unidades faltan para llegar a 10
+                    cantidad_a_pedir = OBJETIVO_STOCK - self.producto.stock_actual
+                    
+                    # Solo generamos el pedido automático si realmente faltan unidades
+                    if cantidad_a_pedir > 0:
                         Pedido.objects.create(
                             producto=self.producto,
                             proveedor=self.producto.proveedor,
                             cantidad=cantidad_a_pedir,
                             tipo='Reposicion',
-                            estado='Pendiente',
-                            notas='🤖 SISTEMA: Pedido generado automáticamente mediante estrategia PUSH por alcance de stock mínimo.'
+                            estado='Surtido',  # Surtido inmediato para autorestock
+                            notas=f'🤖 SISTEMA: Reposición automática PUSH de {cantidad_a_pedir} unidades para reponer stock a {OBJETIVO_STOCK}.'
                         )
 
 

@@ -1,0 +1,81 @@
+{% extends 'crm/base.html' %}
+
+{% block content %}
+<div class="container-fluid py-4">
+    <!-- Encabezado -->
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <div>
+            <h3 class="fw-bold text-dark mb-0"><i class="bi bi-list-check text-primary me-2"></i>Órdenes de clientes</h3>
+            <p class="text-muted small">Consulta de órdenes de clientes registradas.</p>
+        </div>
+        <a href="{% url 'nueva_orden_paso1' %}" class="btn btn-soweb-primary fw-semibold shadow-sm">
+            <i class="bi bi-plus-lg me-1"></i> Nueva orden
+        </a>
+    </div>
+
+    <!-- Barra de búsqueda rápida visual -->
+    <div class="card bg-light border-0 shadow-sm rounded-4 mb-4">
+        <div class="card-body py-3">
+            <div class="row">
+                <div class="col-md-4">
+                    <div class="input-group">
+                        <span class="input-group-text bg-white border-0"><i class="bi bi-search text-muted"></i></span>
+                        <input type="text" class="form-control border-0 shadow-none" placeholder="Buscar orden...">
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Tabla Principal -->
+    <div class="card soweb-card border-0 shadow-sm rounded-4">
+        <div class="card-body p-0">
+            <div class="table-responsive">
+                <table class="table table-hover align-middle mb-0">
+                    <thead class="table-light">
+                        <tr>
+                            <th class="px-4 py-3">Folio</th>
+                            <th class="py-3">Fecha</th>
+                            <th class="py-3">Cliente</th>
+                            <th class="py-3 text-end">Total</th>
+                            <th class="py-3 text-center">Estado</th>
+                            <th class="py-3 text-center pe-4">Acciones</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for orden in ordenes %}
+                        <tr>
+                            <td class="px-4 py-3 fw-bold text-dark">{{ orden.folio }}</td>
+                            <td class="py-3 text-muted">{{ orden.fecha|date:"d/m/Y" }}</td>
+                            <td class="py-3 fw-medium text-dark">{{ orden.cliente.nombre }}</td>
+                            <td class="py-3 text-end fw-semibold">${{ orden.total }}</td>
+                            <td class="py-3 text-center">
+                                {% if orden.estado == 'Completada' %}
+                                    <span class="badge bg-success-subtle text-success px-3 py-2 rounded-pill border border-success-subtle">Procesada</span>
+                                {% elif orden.estado == 'Procesando' %}
+                                    <span class="badge bg-warning-subtle text-warning px-3 py-2 rounded-pill border border-warning-subtle">Procesando</span>
+                                {% else %}
+                                    <span class="badge bg-light text-secondary border px-3 py-2 rounded-pill">{{ orden.estado }}</span>
+                                {% endif %}
+                            </td>
+                            <td class="py-3 text-center pe-4">
+                                <button class="btn btn-sm btn-light text-primary" title="Ver detalles">
+                                    <i class="bi bi-search"></i>
+                                </button>
+                            </td>
+                        </tr>
+                        {% empty %}
+                        <tr>
+                            <td colspan="6" class="text-center py-5 text-muted">
+                                <i class="bi bi-inbox fs-1 d-block mb-2"></i>
+                                No hay órdenes registradas. ¡Haz clic en "Nueva orden" para probar el flujo!
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
