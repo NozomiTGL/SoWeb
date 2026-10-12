@@ -1,0 +1,84 @@
+{% extends 'crm/base.html' %}
+
+{% block content %}
+<div class="container py-4" style="max-width: 800px;">
+    <!-- Encabezado y Barra de Progreso -->
+    <div class="text-center mb-5">
+        <h3 class="fw-bold text-dark">Nueva Orden Empresarial</h3>
+        <p class="text-muted">Paso 3 de 3: Confirmación y Procesamiento</p>
+        
+        <div class="d-flex justify-content-center align-items-center mt-4">
+            <!-- Paso 1 (Completado) -->
+            <div class="d-flex flex-column align-items-center">
+                <div class="rounded-circle bg-success text-white d-flex align-items-center justify-content-center shadow-sm" style="width: 40px; height: 40px;"><i class="bi bi-check-lg fs-5"></i></div>
+                <span class="mt-2 small fw-bold text-success">Cliente</span>
+            </div>
+            <div class="bg-success mx-2" style="width: 80px; height: 4px; border-radius: 2px; opacity: 0.5;"></div>
+            
+            <!-- Paso 2 (Completado) -->
+            <div class="d-flex flex-column align-items-center">
+                <div class="rounded-circle bg-success text-white d-flex align-items-center justify-content-center shadow-sm" style="width: 40px; height: 40px;"><i class="bi bi-check-lg fs-5"></i></div>
+                <span class="mt-2 small fw-bold text-success">Productos</span>
+            </div>
+            <div class="bg-success mx-2" style="width: 80px; height: 4px; border-radius: 2px; opacity: 0.5;"></div>
+            
+            <!-- Paso 3 (Activo) -->
+            <div class="d-flex flex-column align-items-center">
+                <div class="rounded-circle bg-primary text-white d-flex align-items-center justify-content-center shadow-sm" style="width: 40px; height: 40px; font-weight: bold;">3</div>
+                <span class="mt-2 small fw-bold text-primary">Confirmar</span>
+            </div>
+        </div>
+    </div>
+
+    <!-- Resumen de la Orden -->
+    <div class="card border-0 shadow-sm rounded-4 overflow-hidden mb-4">
+        <div class="card-header bg-white border-bottom p-4">
+            <h5 class="mb-1 fw-bold">Resumen de la Orden</h5>
+            <p class="mb-0 text-muted small">Cliente asignado: <strong>{{ cliente.nombre }} ({{ cliente.empresa }})</strong></p>
+        </div>
+        <div class="card-body p-0">
+            <div class="table-responsive">
+                <table class="table mb-0">
+                    <thead class="table-light text-muted small">
+                        <tr>
+                            <th class="px-4 py-3">Producto</th>
+                            <th class="py-3 text-center">Cantidad</th>
+                            <th class="py-3 text-end">Precio unitario</th>
+                            <th class="py-3 px-4 text-end">Subtotal</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for item in items %}
+                        <tr>
+                            <td class="px-4 py-3 text-dark">{{ item.producto.nombre }}</td>
+                            <td class="py-3 text-center fw-medium">{{ item.cantidad }}</td>
+                            <td class="py-3 text-end text-muted">${{ item.producto.costo_unitario }}</td>
+                            <td class="py-3 px-4 text-end fw-semibold text-dark">${{ item.subtotal }}</td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                    <tfoot class="bg-light">
+                        <tr>
+                            <td colspan="3" class="text-end py-3 fw-bold text-dark fs-5">TOTAL:</td>
+                            <td class="text-end py-3 px-4 fw-bold text-primary fs-5">${{ total_orden }}</td>
+                        </tr>
+                    </tfoot>
+                </table>
+            </div>
+        </div>
+    </div>
+
+    <!-- Controles Finales -->
+    <div class="d-flex justify-content-between align-items-center mt-4">
+        <a href="{% url 'nueva_orden_paso2' %}" class="btn btn-light px-4 text-muted"><i class="bi bi-arrow-left me-2"></i> Modificar productos</a>
+        
+        <!-- Botón que dispara la automatización -->
+        <form method="POST" action="{% url 'procesar_orden' %}">
+            {% csrf_token %}
+            <button type="submit" class="btn btn-success px-5 fw-bold shadow">
+                <i class="bi bi-check-circle-fill me-2"></i> Confirmar y Procesar Orden
+            </button>
+        </form>
+    </div>
+</div>
+{% endblock %}
