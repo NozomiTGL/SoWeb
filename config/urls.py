@@ -8,4 +8,5 @@ urlpatterns = [
     path('accounts/register/', crm_views.registrar_usuario, name='registrar_usuario'),
     path('', include('crm.urls')),  # Rutas internas protegidas del CRM
     path('scm/', include('scm.urls')),  # Rutas internas protegidas del SCM
+    path('erp/', include('erp.urls')), # Rutas internas protegidas del ERP
 ]
