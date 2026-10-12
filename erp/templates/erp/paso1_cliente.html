@@ -1,0 +1,58 @@
+{% extends 'crm/base.html' %}
+
+{% block content %}
+<div class="container py-4" style="max-width: 800px;">
+    <!-- Encabezado y Barra de Progreso -->
+    <div class="text-center mb-5">
+        <h3 class="fw-bold text-dark">Nueva Orden Empresarial</h3>
+        <p class="text-muted">Paso 1 de 3: Selección de cliente</p>
+        
+        <div class="d-flex justify-content-center align-items-center mt-4">
+            <!-- Paso 1 (Activo) -->
+            <div class="d-flex flex-column align-items-center">
+                <div class="rounded-circle bg-primary text-white d-flex align-items-center justify-content-center shadow-sm" style="width: 40px; height: 40px; font-weight: bold;">1</div>
+                <span class="mt-2 small fw-bold text-primary">Cliente</span>
+            </div>
+            <div class="bg-light mx-2" style="width: 80px; height: 4px; border-radius: 2px;"></div>
+            
+            <!-- Paso 2 (Inactivo) -->
+            <div class="d-flex flex-column align-items-center">
+                <div class="rounded-circle bg-light text-secondary d-flex align-items-center justify-content-center" style="width: 40px; height: 40px; font-weight: bold;">2</div>
+                <span class="mt-2 small text-muted">Productos</span>
+            </div>
+            <div class="bg-light mx-2" style="width: 80px; height: 4px; border-radius: 2px;"></div>
+            
+            <!-- Paso 3 (Inactivo) -->
+            <div class="d-flex flex-column align-items-center">
+                <div class="rounded-circle bg-light text-secondary d-flex align-items-center justify-content-center" style="width: 40px; height: 40px; font-weight: bold;">3</div>
+                <span class="mt-2 small text-muted">Confirmar</span>
+            </div>
+        </div>
+    </div>
+
+    <!-- Formulario de Selección -->
+    <div class="card border-0 shadow-sm rounded-4">
+        <div class="card-body p-5">
+            <form method="POST" action="{% url 'nueva_orden_paso1' %}">
+                {% csrf_token %}
+                <div class="mb-4">
+                    <label for="cliente_id" class="form-label fw-semibold">Selecciona un Cliente del CRM</label>
+                    <select name="cliente_id" id="cliente_id" class="form-select form-select-lg border-0 bg-light shadow-none" required>
+                        <option value="" disabled selected>-- Buscar cliente... --</option>
+                        {% for cliente in clientes %}
+                            <option value="{{ cliente.id }}">{{ cliente.nombre }} ({{ cliente.empresa }})</option>
+                        {% endfor %}
+                    </select>
+                </div>
+                
+                <div class="d-flex justify-content-between align-items-center mt-5 pt-3 border-top">
+                    <a href="{% url 'lista_ordenes' %}" class="btn btn-light px-4 text-muted">Cancelar</a>
+                    <button type="submit" class="btn btn-primary px-5 fw-semibold shadow-sm">
+                        Siguiente <i class="bi bi-arrow-right ms-2"></i>
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+{% endblock %}
