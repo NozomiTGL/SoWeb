@@ -117,18 +117,44 @@ class MovimientoInventario(models.Model):
         Sobrescribimos el método save para actualizar el stock del producto
         automáticamente al registrar un movimiento nuevo.
         """
-        # Solo actualizamos el stock si es un registro nuevo (no una edición)
         is_new = self.pk is None 
-        
         super().save(*args, **kwargs) # Guardamos el movimiento primero
 
         if is_new:
+            # 1. Actualizamos el stock
             if self.tipo == 'ENTRADA':
                 self.producto.stock_actual += self.cantidad
             elif self.tipo == 'SALIDA':
                 self.producto.stock_actual -= self.cantidad
             
-            self.producto.save() # Guardamos el nuevo stock en el producto
+            self.producto.save() # Guardamos el nuevo stock
+
+            # ==========================================
+            # 2. MAGIA SCM/ERP: AUTOMATIZACIÓN PUSH vs PULL
+            # ==========================================
+            if self.tipo == 'SALIDA' and self.producto.estrategia == 'PUSH':
+                # Revisamos si el stock cayó al límite crítico
+                if self.producto.stock_actual <= self.producto.stock_minimo:
+                    
+                    # Candado: Evitamos hacer pedidos duplicados si ya pedimos y no ha llegado
+                    pedido_pendiente = Pedido.objects.filter(
+                        producto=self.producto,
+                        estado__in=['Pendiente', 'En proceso']
+                    ).exists()
+                    
+                    if not pedido_pendiente:
+                        # Calculamos cuánto pedir (pedimos el equivalente al stock mínimo para resurtir)
+                        cantidad_a_pedir = self.producto.stock_minimo if self.producto.stock_minimo > 0 else 5
+                        
+                        Pedido.objects.create(
+                            producto=self.producto,
+                            proveedor=self.producto.proveedor,
+                            cantidad=cantidad_a_pedir,
+                            tipo='Reposicion',
+                            estado='Pendiente',
+                            notas='🤖 SISTEMA: Pedido generado automáticamente mediante estrategia PUSH por alcance de stock mínimo.'
+                        )
+
 
 class Pedido(models.Model):
     """
