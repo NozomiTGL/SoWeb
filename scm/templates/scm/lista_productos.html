@@ -20,6 +20,7 @@
                         <tr>
                             <th class="px-4 py-3">Servicio / Producto</th>
                             <th class="py-3">Categoría</th>
+                            <th class="py-3 text-center">Estrategia</th>
                             <th class="py-3">Proveedor</th>
                             <th class="py-3 text-center">Capacidad (Stock)</th>
                             <th class="py-3 text-end">Costo Unit.</th>
@@ -36,6 +37,24 @@
                             <td class="py-3">
                                 <span class="badge bg-light text-secondary border">{{ producto.get_categoria_display }}</span>
                             </td>
+                            
+                            <!-- COLUMNA DE ESTRATEGIA CON COLORES (PUSH / PULL) -->
+                            <td class="py-3 text-center">
+                                {% if producto.estrategia == 'PUSH' %}
+                                    <span class="badge bg-warning-subtle text-warning border border-warning-subtle px-3 rounded-pill">
+                                        <i class="bi bi-box-seam me-1"></i> PUSH
+                                    </span>
+                                {% elif producto.estrategia == 'PULL' %}
+                                    <span class="badge bg-info-subtle text-info border border-info-subtle px-3 rounded-pill">
+                                        <i class="bi bi-box-arrow-in-down me-1"></i> PULL
+                                    </span>
+                                {% else %}
+                                    <span class="badge bg-light text-secondary border px-3 rounded-pill">
+                                        {{ producto.get_estrategia_display|default:"N/A" }}
+                                    </span>
+                                {% endif %}
+                            </td>
+
                             <td class="py-3 text-secondary">{{ producto.proveedor.nombre }}</td>
                             <td class="py-3 text-center">
                                 <!-- Alerta visual si el stock llega al mínimo -->
@@ -61,7 +80,7 @@
                         </tr>
                         {% empty %}
                         <tr>
-                            <td colspan="6" class="text-center py-5 text-muted">
+                            <td colspan="7" class="text-center py-5 text-muted">
                                 <i class="bi bi-inbox fs-1 d-block mb-2"></i>
                                 No hay productos o servicios registrados.
                             </td>

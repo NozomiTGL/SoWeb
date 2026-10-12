@@ -9,17 +9,51 @@
         </div>
     </div>
 
-    <!-- Barra de búsqueda rápida (Opcional, para simular la interfaz) -->
+    <!-- PANEL DE FILTROS Y BÚSQUEDA -->
     <div class="card bg-light border-0 shadow-sm rounded-4 mb-4">
         <div class="card-body py-3">
-            <div class="row">
-                <div class="col-md-6">
-                    <div class="input-group">
-                        <span class="input-group-text bg-white border-0"><i class="bi bi-search text-muted"></i></span>
-                        <input type="text" class="form-control border-0 shadow-none" placeholder="Buscar producto...">
+            <form method="GET" action="{% url 'vista_inventario' %}">
+                <div class="row g-3 align-items-center">
+                    
+                    <!-- Búsqueda por Texto -->
+                    <div class="col-md-4">
+                        <div class="input-group">
+                            <span class="input-group-text bg-white border-0"><i class="bi bi-search text-muted"></i></span>
+                            <input type="text" name="q" value="{{ query_nombre }}" class="form-control border-0 shadow-none" placeholder="Buscar por producto o servicio...">
+                        </div>
                     </div>
+                    
+                    <!-- Filtro por Estado de Stock -->
+                    <div class="col-md-3">
+                        <select name="estado" class="form-select border-0 shadow-none text-muted">
+                            <option value="">Todos los estados</option>
+                            <option value="bajo" {% if filtro_estado == 'bajo' %}selected{% endif %}>⬇️ Solo Stock Bajo / Crítico</option>
+                            <option value="normal" {% if filtro_estado == 'normal' %}selected{% endif %}>✅ Stock Normal</option>
+                        </select>
+                    </div>
+
+                    <!-- Filtro por Estrategia -->
+                    <div class="col-md-3">
+                        <select name="estrategia" class="form-select border-0 shadow-none text-muted">
+                            <option value="">Todas las estrategias</option>
+                            <option value="PUSH" {% if filtro_estrategia == 'PUSH' %}selected{% endif %}>Estrategia: PUSH</option>
+                            <option value="PULL" {% if filtro_estrategia == 'PULL' %}selected{% endif %}>Estrategia: PULL</option>
+                        </select>
+                    </div>
+
+                    <!-- Botones de Acción -->
+                    <div class="col-md-2 d-flex gap-2">
+                        <button type="submit" class="btn btn-primary w-100 fw-semibold">
+                            <i class="bi bi-funnel me-1"></i> Filtrar
+                        </button>
+                        <!-- Botón para limpiar filtros (recarga la página sin parámetros) -->
+                        <a href="{% url 'vista_inventario' %}" class="btn btn-light border text-muted px-3" title="Limpiar filtros">
+                            <i class="bi bi-eraser"></i>
+                        </a>
+                    </div>
+
                 </div>
-            </div>
+            </form>
         </div>
     </div>
 
@@ -30,6 +64,7 @@
                     <thead class="table-light">
                         <tr>
                             <th class="px-4 py-3">Producto / Servicio</th>
+                            <th class="py-3 text-center">Estrategia</th>
                             <th class="py-3 text-center">Stock actual</th>
                             <th class="py-3 text-center">Stock mínimo</th>
                             <th class="py-3">Estado</th>
@@ -40,6 +75,14 @@
                         {% for producto in productos %}
                         <tr>
                             <td class="px-4 py-3 fw-medium text-dark">{{ producto.nombre }}</td>
+                            
+                            <!-- Columna de Estrategia para dar más contexto -->
+                            <td class="py-3 text-center">
+                                <span class="badge bg-light text-secondary border rounded-pill px-2">
+                                    {{ producto.estrategia }}
+                                </span>
+                            </td>
+
                             <td class="py-3 text-center fw-bold">{{ producto.stock_actual }}</td>
                             <td class="py-3 text-center text-muted">{{ producto.stock_minimo }}</td>
                             <td class="py-3">
@@ -62,9 +105,9 @@
                         </tr>
                         {% empty %}
                         <tr>
-                            <td colspan="5" class="text-center py-5 text-muted">
+                            <td colspan="6" class="text-center py-5 text-muted">
                                 <i class="bi bi-inbox fs-1 d-block mb-2"></i>
-                                No hay productos en el inventario.
+                                No se encontraron productos con esos filtros.
                             </td>
                         </tr>
                         {% endfor %}

@@ -77,7 +77,10 @@
                 {% endif %}
               </a>
               <ul class="dropdown-menu shadow-sm border-0" aria-labelledby="navbarDropdownSCM">
-                <li><a class="dropdown-item" href="{% url 'lista_productos' %}"><i class="bi bi-hdd-network text-primary me-2"></i>Catálogo de Servicios</a></li>
+                <!-- El nuevo catálogo sin stock -->
+                <li><a class="dropdown-item" href="{% url 'catalogo_general' %}"><i class="bi bi-grid text-primary me-2"></i>Catálogo General</a></li>
+                <!-- Tu CRUD actual, pero renombrado para evitar confusión -->
+                <li><a class="dropdown-item" href="{% url 'lista_productos' %}"><i class="bi bi-hdd-network text-primary me-2"></i>Gestión de Servicios (CRUD)</a></li>
                 <li><a class="dropdown-item" href="{% url 'lista_proveedores' %}"><i class="bi bi-building text-primary me-2"></i>Proveedores / Infra.</a></li>
                 <li><hr class="dropdown-divider"></li>
                 <li><a class="dropdown-item" href="{% url 'lista_movimientos' %}"><i class="bi bi-arrow-left-right text-primary me-2"></i>Movimientos / Inventario</a></li>
@@ -187,6 +190,7 @@
                     </span>
                   </div>
                   <div class="text-end">
+                    <!-- BOTÓN INDIVIDUAL QUE PASA EL ID POR LA URL -->
                     <a href="{% url 'crear_pedido' %}?producto_id={{ prod.id }}" class="btn btn-sm btn-outline-danger rounded-pill fw-semibold shadow-sm">
                       <i class="bi bi-cart-plus me-1"></i> Pedir
                     </a>
@@ -220,6 +224,7 @@
     {% if total_criticos > 0 and user.is_authenticated %}
     <script>
       document.addEventListener("DOMContentLoaded", function () {
+        // Dispara la ventana modal automáticamente
         var modalElement = document.getElementById('modalAlertaStock');
         if (modalElement) {
           var modal = new bootstrap.Modal(modalElement);

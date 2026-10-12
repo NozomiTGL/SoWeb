@@ -165,9 +165,35 @@ def registrar_movimiento(request):
 
 @login_required
 def vista_inventario(request):
-    """Pantalla 6: Consulta de existencias y estado de stock."""
+    """Pantalla 6: Consulta de existencias y estado de stock con filtros dinámicos."""
     productos = Producto.objects.all().order_by('nombre')
-    return render(request, 'scm/inventario.html', {'productos': productos})
+    
+    # 1. Capturamos los filtros de la URL (lo que el usuario seleccionó)
+    query_nombre = request.GET.get('q', '')
+    filtro_estado = request.GET.get('estado', '')
+    filtro_estrategia = request.GET.get('estrategia', '')
+    
+    # 2. Aplicamos los filtros si existen
+    if query_nombre:
+        productos = productos.filter(nombre__icontains=query_nombre)
+        
+    if filtro_estado == 'bajo':
+        productos = productos.filter(stock_actual__lte=F('stock_minimo'))
+    elif filtro_estado == 'normal':
+        productos = productos.filter(stock_actual__gt=F('stock_minimo'))
+        
+    if filtro_estrategia:
+        productos = productos.filter(estrategia=filtro_estrategia)
+        
+    # 3. Pasamos los productos y los filtros activos a la plantilla
+    # para que los selectores no se borren después de buscar
+    context = {
+        'productos': productos,
+        'query_nombre': query_nombre,
+        'filtro_estado': filtro_estado,
+        'filtro_estrategia': filtro_estrategia,
+    }
+    return render(request, 'scm/inventario.html', context)
 
 # ==========================================
 # MÓDULO DE PEDIDOS (Fase 2)
@@ -301,5 +327,15 @@ def catalogo_clientes(request):
     productos = Producto.objects.all().order_by('categoria', 'nombre')
     
     return render(request, 'scm/catalogo_clientes.html', {
+        'productos': productos
+    })
+
+@login_required
+def catalogo_general(request):
+    """Catálogo general interno de servicios (Sin datos de stock)."""
+    # Solo traemos los productos ordenados por categoría
+    productos = Producto.objects.all().order_by('categoria', 'nombre')
+    
+    return render(request, 'scm/catalogo_general.html', {
         'productos': productos
     })

@@ -36,6 +36,8 @@ urlpatterns = [
     # Ruta para Nivel de Madurez (Pantalla 13)
     path('madurez/', views.nivel_madurez, name='nivel_madurez'),
     path('catalogo/', views.catalogo_clientes, name='catalogo_clientes'),
+    # NUEVA RUTA: Catálogo General sin stock
+    path('catalogo-general/', views.catalogo_general, name='catalogo_general'),
 ]
 
 # ==========================================
