@@ -143,20 +143,37 @@ def lista_movimientos(request):
 
 @login_required
 def registrar_movimiento(request):
-    """Registra una entrada o salida y actualiza el stock automáticamente."""
+    """Registra una entrada o salida, actualiza el stock y notifica automatizaciones."""
     if request.method == 'POST':
         form = MovimientoInventarioForm(request.POST)
         if form.is_valid():
-            # commit=False nos permite modificar el objeto antes de guardarlo en la BD
             movimiento = form.save(commit=False)
             movimiento.usuario = request.user 
             
-            # Candado de seguridad: No permitir salidas mayores al stock disponible
+            # Candado de seguridad: No permitir salidas mayores al stock
             if movimiento.tipo == 'SALIDA' and movimiento.cantidad > movimiento.producto.stock_actual:
                 messages.error(request, f'Error: No hay suficiente capacidad. Stock actual de {movimiento.producto.nombre}: {movimiento.producto.stock_actual}')
             else:
-                movimiento.save() # Al hacer .save(), se ejecuta la resta/suma matemática que pusimos en models.py
-                messages.success(request, 'Movimiento registrado. El stock del servicio ha sido actualizado.')
+                # 1. Al hacer .save(), se ejecuta la magia secreta del models.py
+                movimiento.save() 
+                
+                # 2. Mensaje de éxito normal
+                messages.success(request, 'Movimiento registrado correctamente.')
+
+                # ==========================================
+                # 3. EL "POP-UP" DE AUTOMATIZACIÓN (FEEDBACK VISUAL)
+                # ==========================================
+                producto = movimiento.producto
+                
+                # Si fue una salida y el producto es PUSH, verificamos si tocó el mínimo
+                if movimiento.tipo == 'SALIDA' and producto.estrategia == 'PUSH':
+                    if producto.stock_actual <= producto.stock_minimo:
+                        # Lanzamos una alerta color amarillo (warning) para notificar al usuario
+                        messages.warning(
+                            request, 
+                            f'🤖 AUTOMATIZACIÓN PUSH: El stock de "{producto.nombre}" llegó a su límite. El sistema ha generado un pedido automático de reposición.'
+                        )
+                
                 return redirect('lista_movimientos')
     else:
         form = MovimientoInventarioForm()
