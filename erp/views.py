@@ -1,9 +1,10 @@
 from django.shortcuts import render, redirect, get_object_or_404
 from django.contrib.auth.decorators import login_required
+from django.db.models import Sum
 from django.contrib import messages
 from crm.models import Cliente
 from scm.models import Producto, MovimientoInventario
-from .models import OrdenEmpresarial, DetalleOrden
+from .models import EstadoERP, OrdenEmpresarial, DetalleOrden
 
 @login_required
 def lista_ordenes(request):
@@ -151,3 +152,54 @@ def procesar_orden(request):
         return redirect('lista_ordenes')
         
     return redirect('lista_ordenes')
+
+@login_required
+def dashboard_erp(request):
+    """
+    Pantalla 9: Dashboard Empresarial.
+    Métricas que unifican ventas (ERP), clientes (CRM) y productos (SCM).
+    """
+    # 1. Cálculos de ventas y órdenes
+    ventas_totales = OrdenEmpresarial.objects.filter(estado='Completada').aggregate(Sum('total'))['total__sum'] or 0
+    ordenes_procesadas = OrdenEmpresarial.objects.count()
+    
+    # 2. Métricas cruzadas con CRM y SCM
+    clientes_activos = Cliente.objects.filter(estado='activo').count()
+    productos_vendidos = DetalleOrden.objects.aggregate(Sum('cantidad'))['cantidad__sum'] or 0
+    
+    # 3. Top Productos más vendidos
+    top_productos = Producto.objects.annotate(
+        vendidos=Sum('detalleorden__cantidad')
+    ).exclude(vendidos=None).order_by('-vendidos')[:5]
+
+    # 4. Porcentaje simple de inventario disponible (simulado sobre un tope ideal)
+    total_stock = Producto.objects.aggregate(Sum('stock_actual'))['stock_actual__sum'] or 0
+
+    context = {
+        'ventas_totales': ventas_totales,
+        'ordenes_procesadas': ordenes_procesadas,
+        'clientes_activos': clientes_activos,
+        'productos_vendidos': productos_vendidos,
+        'top_productos': top_productos,
+        'total_stock': total_stock
+    }
+    return render(request, 'erp/dashboard_erp.html', context)
+
+
+@login_required
+def nivel_erp(request):
+    """
+    Pantalla 8: Evaluación del nivel de implementación ERP.
+    """
+    # Obtenemos el registro de madurez o lo creamos si no existe
+    estado, created = EstadoERP.objects.get_or_create(id=1, defaults={'nivel': 'Básico'})
+    
+    if request.method == 'POST':
+        nuevo_nivel = request.POST.get('nivel')
+        if nuevo_nivel:
+            estado.nivel = nuevo_nivel
+            estado.save()
+            messages.success(request, f'Nivel de madurez actualizado a: {estado.get_nivel_display()}')
+            return redirect('nivel_erp')
+
+    return render(request, 'erp/nivel_erp.html', {'estado': estado})

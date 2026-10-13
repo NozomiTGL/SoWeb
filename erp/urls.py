@@ -2,6 +2,9 @@ from django.urls import path
 from . import views
 
 urlpatterns = [
+    # Dashboards y Nivel de Madurez
+    path('dashboard/', views.dashboard_erp, name='dashboard_erp'),
+    path('madurez/', views.nivel_erp, name='nivel_erp'),
     # Listado general de órdenes
     path('ordenes/', views.lista_ordenes, name='lista_ordenes'),
     
