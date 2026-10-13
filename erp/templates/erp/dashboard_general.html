@@ -1,0 +1,198 @@
+{% extends 'crm/base.html' %}
+
+{% block content %}
+<!-- Carga de Chart.js -->
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
+<div class="container-fluid py-2" style="max-width: 1300px;">
+    
+    <!-- Encabezado Principal -->
+    <div class="mb-4">
+        <span class="badge bg-primary bg-opacity-10 text-primary rounded-pill px-3 py-1 mb-2 fw-semibold small">SOWEB ERP v1.0</span>
+        <h3 class="fw-bold text-dark mb-0">Dashboard General</h3>
+        <p class="text-muted small mb-0">Vista integrada y consolidada del negocio.</p>
+    </div>
+
+    <!-- TARJETAS SUPERIORES (KPIs) -->
+    <div class="row g-4 mb-4">
+        <!-- Clientes Activos -->
+        <div class="col-md-4">
+            <div class="card border-0 shadow-sm rounded-4 h-100 position-relative overflow-hidden" style="background: linear-gradient(135deg, #f0fdf4 0%, #ffffff 100%); border-left: 5px solid #22c55e !important;">
+                <div class="card-body p-4 d-flex align-items-center justify-content-between">
+                    <div>
+                        <span class="text-muted small text-uppercase fw-bold tracking-wide">Clientes Activos</span>
+                        <h2 class="fw-bold text-dark my-1 display-6">{{ clientes_activos }}</h2>
+                        <span class="badge bg-success bg-opacity-10 text-success rounded-pill px-2 py-1 fs-7 fw-semibold">
+                            <i class="bi bi-people-fill me-1"></i> Cartera CRM
+                        </span>
+                    </div>
+                    <div class="rounded-circle bg-success bg-opacity-10 text-success d-flex align-items-center justify-content-center" style="width: 60px; height: 60px; font-size: 1.75rem;">
+                        <i class="bi bi-person-check-fill"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Órdenes de Clientes -->
+        <div class="col-md-4">
+            <div class="card border-0 shadow-sm rounded-4 h-100 position-relative overflow-hidden" style="background: linear-gradient(135deg, #eff6ff 0%, #ffffff 100%); border-left: 5px solid #3b82f6 !important;">
+                <div class="card-body p-4 d-flex align-items-center justify-content-between">
+                    <div>
+                        <span class="text-muted small text-uppercase fw-bold tracking-wide">Órdenes de Clientes</span>
+                        <h2 class="fw-bold text-primary my-1 display-6">{{ ordenes_clientes }}</h2>
+                        <span class="badge bg-primary bg-opacity-10 text-primary rounded-pill px-2 py-1 fs-7 fw-semibold">
+                            <i class="bi bi-check2-circle me-1"></i> Procesadas
+                        </span>
+                    </div>
+                    <div class="rounded-circle bg-primary bg-opacity-10 text-primary d-flex align-items-center justify-content-center" style="width: 60px; height: 60px; font-size: 1.75rem;">
+                        <i class="bi bi-receipt-cutoff"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Ventas Totales -->
+        <div class="col-md-4">
+            <div class="card border-0 shadow-sm rounded-4 h-100 position-relative overflow-hidden" style="background: linear-gradient(135deg, #fff7ed 0%, #ffffff 100%); border-left: 5px solid #f97316 !important;">
+                <div class="card-body p-4 d-flex align-items-center justify-content-between">
+                    <div>
+                        <span class="text-muted small text-uppercase fw-bold tracking-wide">Ventas Totales</span>
+                        <h2 class="fw-bold my-1 display-6" style="color: #ea580c;">${{ ventas_totales }}</h2>
+                        <span class="badge bg-warning bg-opacity-10 text-warning rounded-pill px-2 py-1 fs-7 fw-semibold">
+                            <i class="bi bi-graph-up-arrow me-1"></i> Ingresos ERP
+                        </span>
+                    </div>
+                    <div class="rounded-circle d-flex align-items-center justify-content-center" style="width: 60px; height: 60px; font-size: 1.75rem; background-color: #ffedd5; color: #ea580c;">
+                        <i class="bi bi-currency-dollar"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- SECCIÓN DE GRÁFICAS GENERALES (2 COLUMNAS) -->
+    <div class="row g-4">
+        <!-- Gráfica 1: Ventas (Últimos 6 meses) -->
+        <div class="col-lg-6">
+            <div class="card border-0 shadow-sm rounded-4 h-100">
+                <div class="card-header bg-white border-bottom py-3 px-4 d-flex justify-content-between align-items-center">
+                    <h6 class="fw-bold text-dark mb-0">
+                        <i class="bi bi-bar-chart-line-fill text-primary me-2"></i>Ventas (Últimos 6 meses)
+                    </h6>
+                    <span class="badge bg-light text-muted border">Comportamiento</span>
+                </div>
+                <div class="card-body p-4">
+                    <div style="position: relative; height: 260px; width: 100%;">
+                        <canvas id="chartVentasGeneral"></canvas>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Gráfica 2: Productos más vendidos -->
+        <div class="col-lg-6">
+            <div class="card border-0 shadow-sm rounded-4 h-100">
+                <div class="card-header bg-white border-bottom py-3 px-4 d-flex justify-content-between align-items-center">
+                    <h6 class="fw-bold text-dark mb-0">
+                        <i class="bi bi-trophy-fill text-warning me-2"></i>Servicios Más Vendidos
+                    </h6>
+                    <span class="badge bg-light text-muted border">Top SCM</span>
+                </div>
+                <div class="card-body p-4">
+                    <div style="position: relative; height: 260px; width: 100%;">
+                        <canvas id="chartProductosGeneral"></canvas>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- SCRIPT DE CHART.JS -->
+<script>
+document.addEventListener("DOMContentLoaded", function() {
+    
+    // 1. Gráfica de Ventas
+    const ctxVentas = document.getElementById('chartVentasGeneral').getContext('2d');
+    new Chart(ctxVentas, {
+        type: 'bar',
+        data: {
+            labels: {{ meses_labels|safe }},
+            datasets: [{
+                label: 'Monto ($)',
+                data: {{ meses_data|safe }},
+                backgroundColor: '#3b82f6',
+                hoverBackgroundColor: '#2563eb',
+                borderRadius: 8,
+                borderSkipped: false,
+                barThickness: 28
+            }]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: {
+                legend: { display: false },
+                tooltip: {
+                    callbacks: {
+                        label: function(context) { return ' Total: $' + context.parsed.y; }
+                    }
+                }
+            },
+            scales: {
+                y: { 
+                    beginAtZero: true, 
+                    grid: { borderDash: [4, 4], color: '#f1f5f9' },
+                    ticks: { color: '#64748b', font: { size: 11 } }
+                },
+                x: { 
+                    grid: { display: false },
+                    ticks: { color: '#64748b', font: { size: 11, weight: '500' } }
+                }
+            }
+        }
+    });
+
+    // 2. Gráfica de Productos
+    const ctxProd = document.getElementById('chartProductosGeneral').getContext('2d');
+    new Chart(ctxProd, {
+        type: 'bar',
+        data: {
+            labels: {{ prod_labels|safe }},
+            datasets: [{
+                label: 'Unidades',
+                data: {{ prod_data|safe }},
+                backgroundColor: '#60a5fa',
+                hoverBackgroundColor: '#3b82f6',
+                borderRadius: 6,
+                barThickness: 18
+            }]
+        },
+        options: {
+            indexAxis: 'y',
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: {
+                legend: { display: false },
+                tooltip: {
+                    callbacks: {
+                        label: function(context) { return ' Vendidos: ' + context.parsed.x + ' uds.'; }
+                    }
+                }
+            },
+            scales: {
+                x: { 
+                    beginAtZero: true, 
+                    grid: { borderDash: [4, 4], color: '#f1f5f9' },
+                    ticks: { color: '#64748b', font: { size: 11 } }
+                },
+                y: { 
+                    grid: { display: false },
+                    ticks: { color: '#334155', font: { size: 11, weight: '600' } }
+                }
+            }
+        }
+    });
+});
+</script>
+{% endblock %}

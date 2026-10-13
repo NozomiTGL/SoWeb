@@ -1,0 +1,230 @@
+{% extends 'crm/base.html' %}
+
+{% block content %}
+<!-- Importamos Chart.js para las gráficas -->
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
+<div class="container-fluid py-4" style="max-width: 1400px;">
+    <!-- Encabezado -->
+    <div class="mb-4">
+        <h3 class="fw-bold text-dark mb-0">Reportes ERP (Dashboard empresarial)</h3>
+        <p class="text-muted small">Indicadores clave del negocio.</p>
+    </div>
+
+    <!-- TARJETAS SUPERIORES (KPIs) -->
+    <div class="row g-3 mb-4">
+        <div class="col-md-3">
+            <div class="card border-0 shadow-sm rounded-4 h-100" style="background-color: #f2f9f5;">
+                <div class="card-body d-flex align-items-center gap-3">
+                    <div class="text-success fs-1"><i class="bi bi-currency-dollar"></i></div>
+                    <div>
+                        <h3 class="fw-bold text-success mb-0">${{ ventas_totales }}</h3>
+                        <span class="text-dark small fw-medium">Ventas totales</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card border-0 shadow-sm rounded-4 h-100" style="background-color: #f0f7ff;">
+                <div class="card-body d-flex align-items-center gap-3">
+                    <div class="text-primary fs-1"><i class="bi bi-bar-chart-fill"></i></div>
+                    <div>
+                        <h3 class="fw-bold text-primary mb-0">{{ ordenes_procesadas }}</h3>
+                        <span class="text-dark small fw-medium">Órdenes de clientes</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card border-0 shadow-sm rounded-4 h-100" style="background-color: #fff5eb;">
+                <div class="card-body d-flex align-items-center gap-3">
+                    <div class="text-warning fs-1"><i class="bi bi-box-seam"></i></div>
+                    <div>
+                        <h3 class="fw-bold text-warning mb-0">{{ productos_vendidos }}</h3>
+                        <span class="text-dark small fw-medium">Productos vendidos</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card border-0 shadow-sm rounded-4 h-100" style="background-color: #f9f2ff;">
+                <div class="card-body d-flex align-items-center gap-3">
+                    <div style="color: #6f42c1;" class="fs-1"><i class="bi bi-people-fill"></i></div>
+                    <div>
+                        <h3 class="fw-bold mb-0" style="color: #6f42c1;">{{ clientes_activos }}</h3>
+                        <span class="text-dark small fw-medium">Clientes activos</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- SECCIÓN DE GRÁFICAS -->
+    <div class="row g-4 mb-4">
+        <!-- Gráfica 1: Ventas por mes -->
+        <div class="col-md-4">
+            <div class="card border-0 shadow-sm rounded-4 h-100">
+                <div class="card-body p-4">
+                    <h6 class="fw-bold text-dark mb-4">Ventas por mes</h6>
+                    <!-- El contenedor con altura fija evita el bug de Chart.js -->
+                    <div style="position: relative; height: 230px; width: 100%;">
+                        <canvas id="ventasChart"></canvas>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Gráfica 2: Productos más vendidos -->
+        <div class="col-md-4">
+            <div class="card border-0 shadow-sm rounded-4 h-100">
+                <div class="card-body p-4">
+                    <h6 class="fw-bold text-dark mb-4">Servicios más vendidos</h6>
+                    <div style="position: relative; height: 230px; width: 100%;">
+                        <canvas id="productosChart"></canvas>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Gráfica 3: Estado de Inventario (Dinámico) -->
+        <div class="col-md-4">
+            <div class="card border-0 shadow-sm rounded-4 h-100">
+                <div class="card-body p-4">
+                    <h6 class="fw-bold text-dark mb-2">Salud del Inventario</h6>
+                    <div style="position: relative; height: 230px; width: 100%; display: flex; justify-content: center;">
+                        <canvas id="inventarioChart"></canvas>
+                        <!-- Texto dinámico calculando la base de datos -->
+                        <div style="position: absolute; top: 40%; left: 50%; transform: translate(-50%, -50%); pointer-events: none;">
+                            <span class="fs-4 fw-bold text-dark mb-0">{{ porcentaje_salud }}%</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- DIAGRAMA DE INTEGRACIÓN DE MÓDULOS -->
+    <div class="card border-0 shadow-sm rounded-4" style="background-color: #f4f0ff;">
+        <div class="card-body p-4 text-center">
+            <h6 class="fw-bold mb-4" style="color: #4a2b99;">Integración entre módulos</h6>
+            
+            <div class="d-flex justify-content-center align-items-center flex-wrap gap-3">
+                <!-- Bloque CRM -->
+                <div class="bg-white rounded-3 shadow-sm p-3 d-flex align-items-center gap-3 border" style="min-width: 280px; border-color: #e0d4fc !important;">
+                    <div class="fs-2" style="color: #0d6efd;"><i class="bi bi-people-fill"></i></div>
+                    <div class="text-start">
+                        <h6 class="fw-bold mb-0">CRM</h6>
+                        <small class="text-muted">Clientes e interacciones</small>
+                    </div>
+                </div>
+
+                <!-- Flechas -->
+                <div class="fs-4 text-muted px-2"><i class="bi bi-arrow-left-right"></i></div>
+
+                <!-- Bloque ERP -->
+                <div class="bg-white rounded-3 shadow-sm p-3 d-flex align-items-center gap-3 border" style="min-width: 300px; border-color: #e0d4fc !important;">
+                    <div class="fs-2" style="color: #4a2b99;"><i class="bi bi-clipboard-data-fill"></i></div>
+                    <div class="text-start">
+                        <h6 class="fw-bold mb-0">ERP</h6>
+                        <small class="text-muted" style="line-height: 1.2;">Órdenes de clientes, integración<br>y reportes empresariales</small>
+                    </div>
+                </div>
+
+                <!-- Flechas -->
+                <div class="fs-4 text-muted px-2"><i class="bi bi-arrow-left-right"></i></div>
+
+                <!-- Bloque SCM -->
+                <div class="bg-white rounded-3 shadow-sm p-3 d-flex align-items-center gap-3 border" style="min-width: 280px; border-color: #e0d4fc !important;">
+                    <div class="fs-2" style="color: #fd7e14;"><i class="bi bi-box-seam-fill"></i></div>
+                    <div class="text-start">
+                        <h6 class="fw-bold mb-0">SCM</h6>
+                        <small class="text-muted" style="line-height: 1.2;">Productos, inventario, proveedores<br>y órdenes a proveedores</small>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- INYECCIÓN DE DATOS Y RENDERIZADO DE CHART.JS -->
+<script>
+document.addEventListener("DOMContentLoaded", function() {
+    
+    // 1. Gráfica de Ventas
+    const ctxVentas = document.getElementById('ventasChart').getContext('2d');
+    new Chart(ctxVentas, {
+        type: 'bar',
+        data: {
+            labels: {{ meses_labels|safe }},
+            datasets: [{
+                label: 'Ventas ($)',
+                data: {{ meses_data|safe }},
+                backgroundColor: '#3b82f6',
+                borderRadius: 4,
+                barThickness: 30
+            }]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false, // CLAVE PARA QUE NO SE TRABE
+            plugins: { legend: { display: false } },
+            scales: {
+                y: { beginAtZero: true, grid: { borderDash: [2, 2] } },
+                x: { grid: { display: false } }
+            }
+        }
+    });
+
+    // 2. Gráfica de Productos
+    const ctxProd = document.getElementById('productosChart').getContext('2d');
+    new Chart(ctxProd, {
+        type: 'bar',
+        data: {
+            labels: {{ prod_labels|safe }},
+            datasets: [{
+                label: 'Unidades Vendidas',
+                data: {{ prod_data|safe }},
+                backgroundColor: '#10b981', 
+                borderRadius: 4,
+                barThickness: 20
+            }]
+        },
+        options: {
+            indexAxis: 'y',
+            responsive: true,
+            maintainAspectRatio: false, // CLAVE PARA QUE NO SE TRABE
+            plugins: { legend: { display: false } },
+            scales: {
+                x: { beginAtZero: true, grid: { borderDash: [2, 2] } },
+                y: { grid: { display: false } }
+            }
+        }
+    });
+
+    // 3. Gráfica de Inventario
+    const ctxInv = document.getElementById('inventarioChart').getContext('2d');
+    new Chart(ctxInv, {
+        type: 'doughnut',
+        data: {
+            labels: {{ rotacion_labels|safe }},
+            datasets: [{
+                data: {{ rotacion_data|safe }},
+                backgroundColor: ['#10b981', '#f59e0b', '#ef4444'], // Verde(Sano), Amarillo(Crítico), Rojo(Agotado)
+                borderWidth: 0,
+                cutout: '75%' 
+            }]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false, // CLAVE PARA QUE NO SE TRABE
+            plugins: {
+                legend: {
+                    position: 'bottom', // Leyenda abajo para centrar la dona
+                    labels: { boxWidth: 12, usePointStyle: true, font: { size: 11 } }
+                }
+            }
+        }
+    });
+});
+</script>
+{% endblock %}

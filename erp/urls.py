@@ -2,9 +2,13 @@ from django.urls import path
 from . import views
 
 urlpatterns = [
+    # Pantalla 1: Inicio ERP (Dashboard general)
+    path('inicio/', views.dashboard_general, name='dashboard_general'),
+    
     # Dashboards y Nivel de Madurez
     path('dashboard/', views.dashboard_erp, name='dashboard_erp'),
     path('madurez/', views.nivel_erp, name='nivel_erp'),
+    
     # Listado general de órdenes
     path('ordenes/', views.lista_ordenes, name='lista_ordenes'),
     
