@@ -18,7 +18,7 @@ from django.utils import timezone
 from django.contrib.auth.models import User
 from django.contrib.auth.forms import UserCreationForm
 from .models import Cliente, Interaccion
-
+from .models import Cliente, Interaccion, PerfilTrabajador
 
 def es_admin(user):
     """
@@ -465,65 +465,68 @@ def registrar_usuario(request):
 
 
 # ---------------------------------------------------------
-# 9. GESTIÓN DE TRABAJADORES / USUARIOS (Exclusivo Administradores)
+# 9. GESTIÓN DE TRABAJADORES / USUARIOS
 # ---------------------------------------------------------
 @login_required
 @user_passes_test(es_admin)
 def lista_usuarios(request):
-    """
-    Muestra la lista de cuentas de usuario/trabajadores del sistema.
-    Acceso restringido a Administradores.
-    """
     usuarios = User.objects.all().order_by('-date_joined')
     return render(request, 'crm/lista_usuarios.html', {'usuarios': usuarios})
-
 
 @login_required
 @user_passes_test(es_admin)
 def crear_usuario(request):
-    """
-    Permite a un administrador dar de alta un nuevo trabajador con asignar roles (staff).
-    """
     if request.method == 'POST':
         username = request.POST.get('username')
         first_name = request.POST.get('first_name')
         last_name = request.POST.get('last_name')
         email = request.POST.get('email')
         password = request.POST.get('password')
-        es_staff = request.POST.get('is_staff') == 'on'
+        
+        # Obtenemos el nuevo rol desde el HTML
+        rol = request.POST.get('rol', 'vendedor')
 
         if User.objects.filter(username=username).exists():
             messages.error(request, f'El nombre de usuario "{username}" ya está registrado.')
         else:
+            # Solo el administrador total será 'staff'
             user = User.objects.create_user(
                 username=username,
                 email=email,
                 password=password,
                 first_name=first_name,
                 last_name=last_name,
-                is_staff=es_staff
+                is_staff=(rol == 'admin')
             )
-            messages.success(request, f'El trabajador "{user.username}" fue creado correctamente.')
+            # Vinculamos su perfil y rol
+            PerfilTrabajador.objects.create(usuario=user, rol=rol)
+            
+            messages.success(request, f'El trabajador "{user.username}" fue creado correctamente con rol {rol.upper()}.')
             return redirect('lista_usuarios')
 
     return render(request, 'crm/form_usuario.html', {'titulo': 'Crear Nuevo Trabajador'})
 
-
 @login_required
 @user_passes_test(es_admin)
 def editar_usuario(request, pk):
-    """
-    Permite modificar los datos personales, estado activo/inactivo, rol de staff
-    o restablecer la contraseña de un trabajador existente.
-    """
     usuario_target = get_object_or_404(User, pk=pk)
+
+    # Parche de seguridad para usuarios antiguos: Si es trabajador interno pero no tiene perfil, se lo creamos.
+    if not hasattr(usuario_target, 'perfil_cliente') and not hasattr(usuario_target, 'perfil_trabajador'):
+        rol_default = 'admin' if usuario_target.is_staff else 'vendedor'
+        PerfilTrabajador.objects.create(usuario=usuario_target, rol=rol_default)
 
     if request.method == 'POST':
         usuario_target.first_name = request.POST.get('first_name')
         usuario_target.last_name = request.POST.get('last_name')
         usuario_target.email = request.POST.get('email')
         usuario_target.is_active = request.POST.get('is_active') == 'on'
-        usuario_target.is_staff = request.POST.get('is_staff') == 'on'
+        
+        rol = request.POST.get('rol')
+        if rol and hasattr(usuario_target, 'perfil_trabajador'):
+            usuario_target.perfil_trabajador.rol = rol
+            usuario_target.perfil_trabajador.save()
+            usuario_target.is_staff = (rol == 'admin')
 
         nueva_clave = request.POST.get('password')
         if nueva_clave:

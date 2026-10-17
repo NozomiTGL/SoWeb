@@ -13,17 +13,34 @@
         </a>
     </div>
 
-    <!-- Barra de búsqueda rápida visual -->
+    <!-- Barra de búsqueda y filtros -->
     <div class="card bg-light border-0 shadow-sm rounded-4 mb-4">
         <div class="card-body py-3">
-            <div class="row">
-                <div class="col-md-4">
+            <form method="GET" action="{% url 'lista_ordenes' %}" class="row g-2 align-items-center">
+                <div class="col-md-5">
                     <div class="input-group">
                         <span class="input-group-text bg-white border-0"><i class="bi bi-search text-muted"></i></span>
-                        <input type="text" class="form-control border-0 shadow-none" placeholder="Buscar orden...">
+                        <input type="text" name="q" value="{{ q }}" class="form-control border-0 shadow-none" placeholder="Buscar por folio o cliente...">
                     </div>
                 </div>
-            </div>
+                <div class="col-md-3">
+                    <select name="estado" class="form-select border-0 shadow-none text-muted">
+                        <option value="">Todos los estados</option>
+                        <option value="Completada" {% if estado_filtro == 'Completada' %}selected{% endif %}>Procesadas</option>
+                        <option value="Procesando" {% if estado_filtro == 'Procesando' %}selected{% endif %}>Procesando</option>
+                        <option value="Pendiente" {% if estado_filtro == 'Pendiente' %}selected{% endif %}>Pendiente</option>
+                        <option value="Cancelada" {% if estado_filtro == 'Cancelada' %}selected{% endif %}>Cancelada</option>
+                    </select>
+                </div>
+                <div class="col-md-2">
+                    <button type="submit" class="btn btn-primary w-100 rounded-3 shadow-sm fw-semibold">Filtrar</button>
+                </div>
+                {% if q or estado_filtro %}
+                <div class="col-md-2">
+                    <a href="{% url 'lista_ordenes' %}" class="btn btn-outline-secondary w-100 rounded-3">Limpiar</a>
+                </div>
+                {% endif %}
+            </form>
         </div>
     </div>
 
@@ -46,7 +63,7 @@
                         {% for orden in ordenes %}
                         <tr>
                             <td class="px-4 py-3 fw-bold text-dark">{{ orden.folio }}</td>
-                            <td class="py-3 text-muted">{{ orden.fecha|date:"d/m/Y" }}</td>
+                            <td class="py-3 text-muted">{{ orden.fecha|date:"d/m/Y H:i" }}</td>
                             <td class="py-3 fw-medium text-dark">{{ orden.cliente.nombre }}</td>
                             <td class="py-3 text-end fw-semibold">${{ orden.total }}</td>
                             <td class="py-3 text-center">
@@ -59,7 +76,7 @@
                                 {% endif %}
                             </td>
                             <td class="py-3 text-center pe-4">
-                                <button class="btn btn-sm btn-light text-primary" title="Ver detalles">
+                                <button type="button" class="btn btn-sm btn-light text-primary border shadow-sm" data-bs-toggle="modal" data-bs-target="#modalDetalle{{ orden.id }}" title="Ver Detalles">
                                     <i class="bi bi-search"></i>
                                 </button>
                             </td>
@@ -68,7 +85,7 @@
                         <tr>
                             <td colspan="6" class="text-center py-5 text-muted">
                                 <i class="bi bi-inbox fs-1 d-block mb-2"></i>
-                                No hay órdenes registradas. ¡Haz clic en "Nueva orden" para probar el flujo!
+                                No se encontraron órdenes con esos criterios.
                             </td>
                         </tr>
                         {% endfor %}
@@ -78,4 +95,73 @@
         </div>
     </div>
 </div>
+
+<!-- ========================================== -->
+<!-- MODALES FUERA DE LA TABLA PARA NO ROMPERLA -->
+<!-- ========================================== -->
+{% for orden in ordenes %}
+<div class="modal fade" id="modalDetalle{{ orden.id }}" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-lg modal-dialog-centered">
+        <div class="modal-content border-0 shadow-lg rounded-4">
+            <div class="modal-header bg-light border-0 py-3">
+                <h5 class="modal-title fw-bold text-dark">
+                    <i class="bi bi-receipt text-primary me-2"></i> Detalle de Orden: {{ orden.folio }}
+                </h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            
+            <div class="modal-body p-4">
+                <div class="row mb-4 bg-light rounded-3 p-3 mx-0 border">
+                    <div class="col-sm-6 mb-2 mb-sm-0">
+                        <p class="text-muted small mb-1 text-uppercase tracking-wide fw-bold">Cliente (CRM)</p>
+                        <h6 class="fw-bold mb-0 text-dark"><i class="bi bi-person-badge text-primary me-1"></i> {{ orden.cliente.nombre }}</h6>
+                    </div>
+                    <div class="col-sm-6 text-sm-end">
+                        <p class="text-muted small mb-1 text-uppercase tracking-wide fw-bold">Ejecutivo de Venta</p>
+                        <h6 class="fw-semibold mb-0 text-secondary">{{ orden.usuario.username|default:"Sistema Automático" }}</h6>
+                    </div>
+                </div>
+
+                <h6 class="fw-bold text-dark mb-3">Servicios Adquiridos</h6>
+                <div class="table-responsive rounded-3 border">
+                    <table class="table table-sm table-hover mb-0 align-middle">
+                        <thead class="table-light">
+                            <tr>
+                                <th class="py-2 px-3">Servicio / Producto</th>
+                                <th class="py-2 text-center">Cant.</th>
+                                <th class="py-2 text-end">Precio Unit.</th>
+                                <th class="py-2 text-end px-3">Subtotal</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for detalle in orden.detalles.all %}
+                            <tr>
+                                <td class="py-2 px-3 text-secondary fw-medium">{{ detalle.producto.nombre }}</td>
+                                <td class="py-2 text-center text-dark">{{ detalle.cantidad }}</td>
+                                <td class="py-2 text-end text-secondary">${{ detalle.precio_unitario }}</td>
+                                <td class="py-2 text-end px-3 fw-semibold text-primary">${{ detalle.subtotal }}</td>
+                            </tr>
+                            {% empty %}
+                            <tr>
+                                <td colspan="4" class="py-3 text-center text-muted small">No hay servicios detallados en esta orden.</td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                        <tfoot class="table-light">
+                            <tr>
+                                <td colspan="3" class="text-end fw-bold py-3 text-dark">Total de la Orden:</td>
+                                <td class="text-end fw-bold fs-5 py-3 px-3" style="color: #ea580c;">${{ orden.total }}</td>
+                            </tr>
+                        </tfoot>
+                    </table>
+                </div>
+            </div>
+            <div class="modal-footer border-0 bg-light rounded-bottom-4 d-flex justify-content-between">
+                <span class="text-muted small"><i class="bi bi-clock-history me-1"></i> Registrada el: {{ orden.fecha|date:"d/m/Y H:i" }}</span>
+                <button type="button" class="btn btn-secondary fw-semibold shadow-sm" data-bs-dismiss="modal">Cerrar</button>
+            </div>
+        </div>
+    </div>
+</div>
+{% endfor %}
 {% endblock %}

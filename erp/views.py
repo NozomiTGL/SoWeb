@@ -10,11 +10,36 @@ from django.db.models.functions import TruncMonth
 from django.utils import timezone
 from datetime import timedelta
 
+from django.db.models import Sum, Count, F, Q  # Añade Q aquí
+
 @login_required
 def lista_ordenes(request):
-    """Pantalla principal del ERP: Lista de órdenes procesadas."""
-    ordenes = OrdenEmpresarial.objects.all().select_related('cliente')
-    return render(request, 'erp/lista_ordenes.html', {'ordenes': ordenes})
+    """Pantalla principal del ERP: Lista de órdenes procesadas con filtros."""
+    query = request.GET.get('q', '')
+    estado_filtro = request.GET.get('estado', '')
+
+    # Consulta base optimizada
+    ordenes = OrdenEmpresarial.objects.all().select_related(
+        'cliente', 'usuario'
+    ).prefetch_related('detalles__producto')
+
+    # Filtro por búsqueda de texto (Folio o Nombre del Cliente)
+    if query:
+        ordenes = ordenes.filter(
+            Q(folio__icontains=query) | 
+            Q(cliente__nombre__icontains=query)
+        )
+
+    # Filtro por Estado
+    if estado_filtro:
+        ordenes = ordenes.filter(estado=estado_filtro)
+
+    context = {
+        'ordenes': ordenes,
+        'q': query,
+        'estado_filtro': estado_filtro
+    }
+    return render(request, 'erp/lista_ordenes.html', context)
 
 @login_required
 def nueva_orden_paso1(request):

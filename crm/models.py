@@ -1,31 +1,36 @@
-"""
-Módulo de Modelos para la aplicación CRM de SoWeb.
-
-Define las entidades principales para la gestión de cartera de clientes,
-asignación de vendedores/trabajadores y seguimiento de minutas de interacción.
-"""
-
 from django.db import models
 from django.contrib.auth.models import User
+
+class PerfilTrabajador(models.Model):
+    """
+    Extensión del usuario para manejar roles internos avanzados (RBAC).
+    """
+    ROL_CHOICES = [
+        ('admin', 'Administrador'),
+        ('vendedor', 'Vendedor'),
+        ('logistica', 'Logística'),
+    ]
+    usuario = models.OneToOneField(
+        User, 
+        on_delete=models.CASCADE, 
+        related_name='perfil_trabajador',
+        verbose_name="Usuario Asociado"
+    )
+    rol = models.CharField(max_length=20, choices=ROL_CHOICES, default='vendedor', verbose_name="Rol Operativo")
+
+    def __str__(self):
+        return f"{self.usuario.username} - {self.get_rol_display()}"
 
 
 class Cliente(models.Model):
     """
     Representa a un cliente o prospecto comercial dentro del sistema CRM.
-    
-    Permite almacenar la información de contacto, la empresa u organización a la que
-    pertenece, el estado activo/inactivo de la relación comercial y la etapa
-    dentro del embudo de ventas (etapa_crm). Además, soporta la asignación
-    de un trabajador/vendedor responsable (RBAC).
     """
-
-    # Opciones de estado operacional del cliente
     ESTADO_CHOICES = [
         ('activo', 'Activo'),
         ('inactivo', 'Inactivo'),
     ]
     
-    # Opciones del ciclo de vida del cliente en el pipeline CRM
     ETAPA_CHOICES = [
         ('prospecto', 'Prospecto'),
         ('activo', 'Activo'),
@@ -43,7 +48,7 @@ class Cliente(models.Model):
         verbose_name="Vendedor asignado"
     )
 
-    # NUEVO: Vinculación con la cuenta de acceso del propio CLIENTE
+    # Vinculación con la cuenta de acceso del propio CLIENTE
     usuario_login = models.OneToOneField(
         User,
         on_delete=models.SET_NULL,
@@ -53,23 +58,11 @@ class Cliente(models.Model):
         verbose_name="Cuenta de Acceso (Cliente)"
     )
 
-    # Vinculación con el usuario del sistema encargado del cliente (Relación 1:N con User)
-    vendedor = models.ForeignKey(
-        User, 
-        on_delete=models.SET_NULL, 
-        null=True, 
-        blank=True, 
-        related_name='clientes',
-        verbose_name="Vendedor asignado"
-    )
-
-    # Información básica de contacto y empresa
     nombre = models.CharField(max_length=150, verbose_name="Nombre del contacto")
     correo = models.EmailField(unique=True, verbose_name="Correo electrónico")
     telefono = models.CharField(max_length=20, blank=True, null=True, verbose_name="Teléfono")
     empresa = models.CharField(max_length=150, blank=True, null=True, verbose_name="Empresa / Negocio")
     
-    # Atributos de control temporal y segmentación comercial
     fecha_registro = models.DateTimeField(auto_now_add=True, verbose_name="Fecha de registro")
     estado = models.CharField(max_length=10, choices=ESTADO_CHOICES, default='activo', verbose_name="Estado")
     etapa_crm = models.CharField(max_length=15, choices=ETAPA_CHOICES, default='prospecto', verbose_name="Etapa CRM")
@@ -77,29 +70,22 @@ class Cliente(models.Model):
     class Meta:
         verbose_name = "Cliente"
         verbose_name_plural = "Clientes"
-        ordering = ['-fecha_registro']  # Orden predeterminado: más recientes primero
+        ordering = ['-fecha_registro']
 
     def __str__(self):
-        """Devuelve una representación legible del cliente con su empresa asociada."""
-        return f"{self.nombre} - {self.empresa or 'Sin empresa'}"
+        return f"{self.nombre} | {self.empresa or 'Sin empresa'}"
 
 
 class Interaccion(models.Model):
     """
-    Registra el historial de seguimiento, minutas y contactos realizados con un cliente.
-    
-    Almacena el tipo de comunicación (llamada, correo, reunión), el detalle de la
-    conversación y el usuario/trabajador que ejecutó la acción.
+    Registra el historial de seguimiento y contactos.
     """
-
-    # Vías de comunicación registrables
     TIPO_CHOICES = [
         ('llamada', 'Llamada'),
         ('correo', 'Correo'),
         ('reunion', 'Reunión'),
     ]
 
-    # Claves foráneas: Vinculación con el cliente atendido y el trabajador responsable
     cliente = models.ForeignKey(
         Cliente, 
         on_delete=models.CASCADE, 
@@ -112,7 +98,6 @@ class Interaccion(models.Model):
         verbose_name="Usuario responsable"
     )
     
-    # Detalle de la interacción realizada
     tipo = models.CharField(max_length=10, choices=TIPO_CHOICES, verbose_name="Tipo de interacción")
     descripcion = models.TextField(verbose_name="Descripción / Minuta")
     fecha = models.DateTimeField(auto_now_add=True, verbose_name="Fecha de interacción")
@@ -120,8 +105,7 @@ class Interaccion(models.Model):
     class Meta:
         verbose_name = "Interacción"
         verbose_name_plural = "Interacciones"
-        ordering = ['-fecha']  # Orden predeterminado: interacciones más recientes primero
+        ordering = ['-fecha']
 
     def __str__(self):
-        """Devuelve una síntesis de la interacción especificando tipo, cliente y fecha."""
-        return f"{self.tipo.upper()} con {self.cliente.nombre} - {self.fecha.strftime('%d/%m/%Y')}"
+        return f"{self.tipo.upper()} con {self.cliente.nombre} | {self.fecha.strftime('%d/%m/%Y')}"
