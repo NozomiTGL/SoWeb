@@ -28,54 +28,47 @@
         <div class="collapse navbar-collapse" id="navbarNav">
           <ul class="navbar-nav me-auto ms-lg-4 align-items-center">
             
-            {# ========================================== #}
-            {# MENÚ PARA TRABAJADORES INTERNOS (RBAC)     #}
-            {# ========================================== #}
+            {# ================================================================= #}
+            {# MENÚ 1: MÓDULOS PRINCIPALES (Izquierda)                           #}
+            {# ================================================================= #}
             {% if user.is_authenticated and not user.perfil_cliente %}
 
-                <!-- Módulo CRM -->
+                <!-- MÓDULO CRM (Oculto solo para Logística) -->
+                {% if user.is_superuser or user.perfil_trabajador.rol == 'admin' or user.perfil_trabajador.rol == 'vendedor' or not user.is_staff %}
                 <li class="nav-item dropdown">
                   <a class="nav-link dropdown-toggle px-3 d-flex align-items-center gap-1" href="#" id="navbarDropdownCRM" role="button" data-bs-toggle="dropdown">
-                    <i class="bi bi-people-fill"></i>
-                    <span>Módulo CRM</span>
+                    <i class="bi bi-people-fill"></i><span>Módulo CRM</span>
                   </a>
                   <ul class="dropdown-menu shadow-sm border-0 rounded-3">
                     <li><a class="dropdown-item py-2" href="{% url 'lista_clientes' %}"><i class="bi bi-person-badge text-primary me-2"></i>Cartera de Clientes</a></li>
                     <li><a class="dropdown-item py-2" href="{% url 'mi_actividad' %}"><i class="bi bi-person-lines-fill text-primary me-2"></i>Mi Actividad</a></li>
-                    
-                    {% if user.perfil_trabajador.rol == 'admin' %}
+                    {% if user.is_superuser or user.perfil_trabajador.rol == 'admin' %}
                     <li><a class="dropdown-item py-2" href="{% url 'reportes_metricas' %}"><i class="bi bi-bar-chart-line-fill text-primary me-2"></i>Reportes de Ventas</a></li>
                     {% endif %}
                   </ul>
                 </li>
+                {% endif %}
 
-                <!-- Módulo SCM -->
+                <!-- MÓDULO SCM -->
                 <li class="nav-item dropdown">
                   <a class="nav-link dropdown-toggle px-3 position-relative d-flex align-items-center gap-1" href="#" id="navbarDropdownSCM" role="button" data-bs-toggle="dropdown">
-                    <i class="bi bi-box-seam-fill"></i>
-                    <span>Módulo SCM</span>
-                    {% if user.perfil_trabajador.rol == 'admin' or user.perfil_trabajador.rol == 'logistica' %}
+                    <i class="bi bi-box-seam-fill"></i><span>Módulo SCM</span>
+                    {% if user.is_superuser or user.perfil_trabajador.rol == 'admin' or user.perfil_trabajador.rol == 'logistica' %}
                       {% if total_criticos > 0 %}
-                      <span class="position-absolute top-0 start-100 translate-middle p-1 bg-danger border border-light rounded-circle">
-                        <span class="visually-hidden">Alertas de stock</span>
-                      </span>
+                      <span class="position-absolute top-0 start-100 translate-middle p-1 bg-danger border border-light rounded-circle"></span>
                       {% endif %}
                     {% endif %}
                   </a>
                   <ul class="dropdown-menu shadow-sm border-0 rounded-3">
-                    
-                    <!-- Visible para Admin, Logística y Vendedor -->
                     <li><a class="dropdown-item py-2" href="{% url 'catalogo_general' %}"><i class="bi bi-grid text-primary me-2"></i>Inicio / Catálogo</a></li>
-                    
-                    <!-- Visible SOLO para Admin y Logística -->
-                    {% if user.perfil_trabajador.rol == 'admin' or user.perfil_trabajador.rol == 'logistica' %}
                     <li><a class="dropdown-item py-2" href="{% url 'lista_productos' %}"><i class="bi bi-hdd-network text-primary me-2"></i>Productos (SCM)</a></li>
+                    
+                    {% if user.is_superuser or user.perfil_trabajador.rol == 'admin' or user.perfil_trabajador.rol == 'logistica' %}
                     <li><a class="dropdown-item py-2" href="{% url 'vista_inventario' %}"><i class="bi bi-box2-heart text-primary me-2"></i>Inventario (SCM)</a></li>
                     <li><a class="dropdown-item py-2 fw-bold" href="{% url 'dashboard_scm' %}"><i class="bi bi-bar-chart-fill text-primary me-2"></i>Reportes SCM</a></li>
                     {% endif %}
                     
-                    <!-- Configuraciones Avanzadas (SOLO Admin) -->
-                    {% if user.perfil_trabajador.rol == 'admin' %}
+                    {% if user.is_superuser or user.perfil_trabajador.rol == 'admin' %}
                     <li><hr class="dropdown-divider"></li>
                     <li><a class="dropdown-item py-2" href="{% url 'lista_proveedores' %}"><i class="bi bi-building text-primary me-2"></i>Proveedores / Infra.</a></li>
                     <li><a class="dropdown-item py-2" href="{% url 'lista_movimientos' %}"><i class="bi bi-arrow-left-right text-primary me-2"></i>Historial Movimientos</a></li>
@@ -87,78 +80,117 @@
                   </ul>
                 </li>
 
-                <!-- Módulo ERP -->
+                <!-- MÓDULO ERP -->
                 <li class="nav-item dropdown">
                   <a class="nav-link dropdown-toggle px-3 d-flex align-items-center gap-1" href="#" id="navbarDropdownERP" role="button" data-bs-toggle="dropdown">
-                    <i class="bi bi-diagram-3-fill"></i>
-                    <span>Módulo ERP</span>
+                    <i class="bi bi-diagram-3-fill"></i><span>Módulo ERP</span>
                   </a>
                   <ul class="dropdown-menu shadow-sm border-0 rounded-3">
-                    
-                    <!-- Vistas Gerenciales (Solo Admin) -->
-                    {% if user.perfil_trabajador.rol == 'admin' %}
+                    {% if user.is_superuser or user.perfil_trabajador.rol == 'admin' %}
                     <li><a class="dropdown-item py-2 fw-bold" href="{% url 'dashboard_general' %}"><i class="bi bi-grid-1x2-fill text-primary me-2"></i>Dashboard General (Inicio)</a></li>
                     <li><a class="dropdown-item py-2 fw-bold" href="{% url 'dashboard_erp' %}"><i class="bi bi-pie-chart-fill text-primary me-2"></i>Dashboard Empresarial</a></li>
                     <li><hr class="dropdown-divider"></li>
                     {% endif %}
                     
-                    <!-- Vistas Operativas (Admin, Logística y Vendedores) -->
                     <li><a class="dropdown-item py-2" href="{% url 'lista_ordenes' %}"><i class="bi bi-list-check text-primary me-2"></i>Órdenes (ERP)</a></li>
-                    <li><a class="dropdown-item py-2" href="{% url 'nueva_orden_paso1' %}"><i class="bi bi-plus-circle-fill text-primary me-2"></i>Nueva Orden (Venta)</a></li>
                     
-                    <!-- Madurez ERP (Solo Admin) -->
-                    {% if user.perfil_trabajador.rol == 'admin' %}
+                    {% if user.is_superuser or user.perfil_trabajador.rol == 'admin' or user.perfil_trabajador.rol == 'vendedor' or not user.is_staff %}
+                    <li><a class="dropdown-item py-2" href="{% url 'nueva_orden_paso1' %}"><i class="bi bi-plus-circle-fill text-primary me-2"></i>Nueva Orden (Venta)</a></li>
+                    {% endif %}
+
+                    {% if user.is_superuser or user.perfil_trabajador.rol == 'admin' %}
                     <li><hr class="dropdown-divider"></li>
                     <li><a class="dropdown-item py-2" href="{% url 'nivel_erp' %}"><i class="bi bi-award text-primary me-2"></i>Nivel de Madurez ERP</a></li>
                     {% endif %}
                   </ul>
                 </li>
-                
-                <!-- Accesos (Solo Admin) -->
-                {% if user.perfil_trabajador.rol == 'admin' or user.is_staff %}
+
+                <!-- ACCESOS (Solo Admin) -->
+                {% if user.is_superuser or user.perfil_trabajador.rol == 'admin' %}
                 <li class="nav-item">
                   <a class="nav-link px-3 d-flex align-items-center gap-1" href="{% url 'lista_usuarios' %}">
-                    <i class="bi bi-shield-lock-fill"></i>
-                    <span>Accesos</span>
+                    <i class="bi bi-shield-lock-fill"></i><span>Accesos</span>
                   </a>
                 </li>
                 {% endif %}
 
-            {# ========================================== #}
-            {# MENÚ B2B PARA CLIENTES EXTERNOS            #}
-            {# ========================================== #}
             {% elif user.is_authenticated and user.perfil_cliente %}
                 <li class="nav-item">
                   <a class="nav-link px-3 d-flex align-items-center gap-1" href="{% url 'catalogo_clientes' %}">
-                    <i class="bi bi-shop"></i>
-                    <span>Vitrina de Servicios</span>
+                    <i class="bi bi-shop"></i><span>Vitrina de Servicios</span>
                   </a>
                 </li>
             {% endif %}
           </ul>
 
-          {# Perfil y Cierre de Sesión #}
+          {# ================================================================= #}
+          {# MENÚ 2: PANEL DINÁMICO POR ROL (Derecha)                          #}
+          {# ================================================================= #}
           {% if user.is_authenticated %}
           <div class="d-flex align-items-center gap-3">
             
-            {% if user.perfil_trabajador.rol == 'admin' or user.perfil_trabajador.rol == 'logistica' %}
+            {% if not user.perfil_cliente %}
+            <div class="dropdown">
+              <button class="btn btn-outline-light btn-sm rounded-3 shadow-sm d-flex align-items-center gap-2 dropdown-toggle" type="button" data-bs-toggle="dropdown" aria-expanded="false">
+                <i class="bi bi-person-workspace"></i>
+                <span>Mi Panel</span>
+              </button>
+              <ul class="dropdown-menu dropdown-menu-end shadow border-0 rounded-3 mt-2">
+                
+                <!-- Opciones para ADMINISTRADOR -->
+                {% if user.is_superuser or user.perfil_trabajador.rol == 'admin' %}
+                    <li><a class="dropdown-item py-2 fw-semibold text-primary" href="{% url 'dashboard' %}"><i class="bi bi-check2-circle me-2"></i>Inicio</a></li>
+                    <li><a class="dropdown-item py-2" href="{% url 'lista_clientes' %}"><i class="bi bi-check2 text-success me-2"></i>Clientes (CRM)</a></li>
+                    <li><a class="dropdown-item py-2" href="{% url 'lista_productos' %}"><i class="bi bi-check2 text-success me-2"></i>Productos (SCM)</a></li>
+                    <li><a class="dropdown-item py-2" href="{% url 'vista_inventario' %}"><i class="bi bi-check2 text-success me-2"></i>Inventario (SCM)</a></li>
+                    <li><a class="dropdown-item py-2" href="{% url 'lista_ordenes' %}"><i class="bi bi-check2 text-success me-2"></i>Órdenes (ERP)</a></li>
+                    <li><a class="dropdown-item py-2" href="{% url 'reportes_metricas' %}"><i class="bi bi-check2 text-success me-2"></i>Reportes</a></li>
+                    <li><a class="dropdown-item py-2" href="{% url 'nivel_erp' %}"><i class="bi bi-check2 text-success me-2"></i>Nivel ERP</a></li>
+                    <li><a class="dropdown-item py-2" href="{% url 'lista_usuarios' %}"><i class="bi bi-check2 text-success me-2"></i>Usuarios</a></li>
+                    <li><a class="dropdown-item py-2" href="#"><i class="bi bi-check2 text-success me-2"></i>Configuración</a></li>
+                
+                <!-- Opciones para LOGÍSTICA -->
+                {% elif user.perfil_trabajador.rol == 'logistica' %}
+                    <li><a class="dropdown-item py-2 fw-semibold text-primary" href="{% url 'catalogo_general' %}"><i class="bi bi-check2-circle me-2"></i>Inicio</a></li>
+                    <li><a class="dropdown-item py-2" href="{% url 'lista_productos' %}"><i class="bi bi-check2 text-success me-2"></i>Productos (SCM)</a></li>
+                    <li><a class="dropdown-item py-2" href="{% url 'vista_inventario' %}"><i class="bi bi-check2 text-success me-2"></i>Inventario (SCM)</a></li>
+                    <li><a class="dropdown-item py-2" href="{% url 'lista_ordenes' %}"><i class="bi bi-check2 text-success me-2"></i>Órdenes (ERP)</a></li>
+                    <li><a class="dropdown-item py-2" href="{% url 'dashboard_scm' %}"><i class="bi bi-check2 text-success me-2"></i>Reportes</a></li>
+                
+                <!-- Opciones para VENTAS (o fallback) -->
+                {% else %} 
+                    <li><a class="dropdown-item py-2 fw-semibold text-primary" href="{% url 'dashboard' %}"><i class="bi bi-check2-circle me-2"></i>Inicio</a></li>
+                    <li><a class="dropdown-item py-2" href="{% url 'lista_clientes' %}"><i class="bi bi-check2 text-success me-2"></i>Clientes (CRM)</a></li>
+                    <li><a class="dropdown-item py-2" href="{% url 'lista_productos' %}"><i class="bi bi-check2 text-success me-2"></i>Productos (SCM)</a></li>
+                    <li><a class="dropdown-item py-2" href="{% url 'lista_ordenes' %}"><i class="bi bi-check2 text-success me-2"></i>Órdenes (ERP)</a></li>
+                    <li><a class="dropdown-item py-2" href="{% url 'reportes_metricas' %}"><i class="bi bi-check2 text-success me-2"></i>Reportes</a></li>
+                    <li><a class="dropdown-item py-2" href="{% url 'mi_actividad' %}"><i class="bi bi-check2 text-success me-2"></i>Mi actividad</a></li>
+                {% endif %}
+
+              </ul>
+            </div>
+            {% endif %}
+
+            <!-- Notificación de Alerta de Stock -->
+            {% if user.is_superuser or user.perfil_trabajador.rol == 'admin' or user.perfil_trabajador.rol == 'logistica' %}
               {% if total_criticos > 0 %}
               <button type="button" class="btn btn-outline-danger btn-sm rounded-pill px-3 shadow-sm d-flex align-items-center gap-1" data-bs-toggle="modal" data-bs-target="#modalAlertaStock">
                 <i class="bi bi-bell-fill"></i>
-                <span>Stock Crítico</span>
+                <span class="d-none d-md-inline">Stock Crítico</span>
                 <span class="badge rounded-pill bg-danger ms-1">{{ total_criticos }}</span>
               </button>
               {% endif %}
             {% endif %}
 
-            <div class="text-end d-none d-lg-block">
+            <!-- Perfil de Usuario Info -->
+            <div class="text-end d-none d-lg-block ms-2 border-start border-secondary ps-3">
               <small class="text-muted d-block leading-none text-uppercase fw-bold" style="font-size: 0.70rem; letter-spacing: 0.5px;">
                 {% if user.perfil_cliente %}
                     Cliente B2B
+                {% elif user.is_superuser %}
+                    Administrador
                 {% elif user.perfil_trabajador %}
                     {{ user.perfil_trabajador.get_rol_display }}
-                {% elif user.is_staff %}
-                    Administrador
                 {% else %}
                     Vendedor
                 {% endif %}
@@ -166,11 +198,11 @@
               <span class="text-white fw-semibold small">{{ user.username }}</span>
             </div>
             
-            <form method="post" action="{% url 'logout' %}">
+            <!-- Botón Salir -->
+            <form method="post" action="{% url 'logout' %}" class="ms-2">
               {% csrf_token %}
               <button type="submit" class="btn btn-outline-light btn-sm rounded-3 shadow-sm d-flex align-items-center gap-1">
                 <i class="bi bi-box-arrow-right"></i>
-                <span>Salir</span>
               </button>
             </form>
           </div>
@@ -204,7 +236,7 @@
     </main>
 
     {# Modal de Alerta de Stock #}
-    {% if user.perfil_trabajador.rol == 'admin' or user.perfil_trabajador.rol == 'logistica' %}
+    {% if user.is_superuser or user.perfil_trabajador.rol == 'admin' or user.perfil_trabajador.rol == 'logistica' %}
       {% if total_criticos > 0 %}
       <div class="modal fade" id="modalAlertaStock" tabindex="-1" aria-hidden="true">
         <div class="modal-dialog modal-dialog-centered">
@@ -249,7 +281,7 @@
 
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
 
-    {% if user.perfil_trabajador.rol == 'admin' or user.perfil_trabajador.rol == 'logistica' %}
+    {% if user.is_superuser or user.perfil_trabajador.rol == 'admin' or user.perfil_trabajador.rol == 'logistica' %}
       {% if total_criticos > 0 %}
       <script>
         document.addEventListener("DOMContentLoaded", function () {

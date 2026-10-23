@@ -37,19 +37,29 @@ def es_admin(user):
 def dashboard(request):
     """
     Despliega el tablero principal con métricas clave del sistema.
+    Redirige a los usuarios B2B y a Logística fuera de esta vista.
     """
     # ==========================================
-    # MAGIA DE REDIRECCIÓN B2B
-    # Si el usuario es un Cliente, lo mandamos al Catálogo
+    # 1. REDIRECCIÓN B2B (Clientes externos)
     # ==========================================
     if hasattr(request.user, 'perfil_cliente'):
         return redirect('catalogo_clientes')
 
-    # Consulta condicional según el rol (Staff / Vendedor)
-    if request.user.is_staff:
+    # ==========================================
+    # 2. REDIRECCIÓN LOGÍSTICA (Fuera del CRM)
+    # ==========================================
+    if hasattr(request.user, 'perfil_trabajador') and request.user.perfil_trabajador.rol == 'logistica':
+        return redirect('catalogo_general')
+
+    # ==========================================
+    # 3. LÓGICA NORMAL CRM (Admin y Ventas)
+    # ==========================================
+    if request.user.is_staff or (hasattr(request.user, 'perfil_trabajador') and request.user.perfil_trabajador.rol == 'admin'):
         clientes_qs = Cliente.objects.all()
+        interacciones_qs = Interaccion.objects.all()
     else:
         clientes_qs = Cliente.objects.filter(vendedor=request.user)
+        interacciones_qs = Interaccion.objects.filter(usuario=request.user)
 
     total_clientes = clientes_qs.count()
     activos = clientes_qs.filter(estado='activo').count()
@@ -58,10 +68,6 @@ def dashboard(request):
     porcentaje_activos = round((activos / total_clientes * 100), 1) if total_clientes > 0 else 0
     
     ahora = timezone.now()
-    if request.user.is_staff:
-        interacciones_qs = Interaccion.objects.all()
-    else:
-        interacciones_qs = Interaccion.objects.filter(usuario=request.user)
 
     # Interacciones acumuladas en el mes en curso
     interacciones_mes = interacciones_qs.filter(
