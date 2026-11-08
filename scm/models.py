@@ -44,6 +44,15 @@ class Producto(models.Model):
     descripcion = models.TextField(verbose_name="Descripción")
     categoria = models.CharField(max_length=50, choices=CATEGORIA_CHOICES, verbose_name="Categoría")
     
+    # ----------------------------------------------------
+    # NUEVOS CAMPOS E-COMMERCE (ETAPA 4)
+    # ----------------------------------------------------
+    precio_venta = models.DecimalField(max_digits=10, decimal_places=2, default=0.00, verbose_name="Precio de Venta Público")
+    imagen = models.ImageField(upload_to='productos/', blank=True, null=True, verbose_name="Imagen del Servicio/Producto")
+    estado = models.BooleanField(default=True, verbose_name="Activo / Visible en tienda")
+    destacado = models.BooleanField(default=False, verbose_name="Destacado en Novedades")
+    # ----------------------------------------------------
+    
     # Control de capacidad operativa (Inventario)
     stock_actual = models.IntegerField(default=0, verbose_name="Stock actual (Capacidad disponible)")
     stock_minimo = models.IntegerField(default=0, verbose_name="Stock mínimo (Punto de reorden)")
@@ -64,7 +73,7 @@ class Producto(models.Model):
         verbose_name="Proveedor de infraestructura"
     )
     
-    costo_unitario = models.DecimalField(max_digits=10, decimal_places=2, verbose_name="Costo unitario")
+    costo_unitario = models.DecimalField(max_digits=10, decimal_places=2, verbose_name="Costo unitario interno")
 
     class Meta:
         verbose_name = "Producto / Servicio"

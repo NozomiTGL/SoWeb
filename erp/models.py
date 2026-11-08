@@ -104,3 +104,48 @@ class EstadoERP(models.Model):
 
     def __str__(self):
         return f"Nivel Actual: {self.nivel}"
+
+from django.db import models
+
+class Impuesto(models.Model):
+    """
+    Configurador de cálculo de impuestos aplicables en el checkout.
+    """
+    nombre = models.CharField(max_length=50, verbose_name="Nombre del Impuesto (Ej. IVA)")
+    porcentaje = models.DecimalField(max_digits=5, decimal_places=2, verbose_name="Porcentaje (%)")
+    estado = models.BooleanField(default=True, verbose_name="Activo")
+
+    class Meta:
+        verbose_name = "Impuesto"
+        verbose_name_plural = "Impuestos"
+
+    def __str__(self):
+        return f"{self.nombre} ({self.porcentaje}%)"
+
+
+class Promocion(models.Model):
+    """
+    Gestión de promociones y descuentos para la estrategia de comercialización.
+    """
+    TIPO_CHOICES = [
+        ('porcentaje', 'Descuento por Porcentaje (%)'),
+        ('monto', 'Descuento por Monto Fijo ($)'),
+    ]
+
+    nombre = models.CharField(max_length=150, verbose_name="Nombre de la Promoción")
+    descripcion = models.TextField(blank=True, null=True, verbose_name="Descripción")
+    tipo_descuento = models.CharField(max_length=20, choices=TIPO_CHOICES, verbose_name="Tipo de Descuento")
+    valor = models.DecimalField(max_digits=10, decimal_places=2, verbose_name="Valor del Descuento")
+    fecha_inicio = models.DateTimeField(verbose_name="Fecha de Inicio")
+    fecha_fin = models.DateTimeField(verbose_name="Fecha de Fin")
+    estado = models.BooleanField(default=True, verbose_name="Promoción Activa")
+    
+    # Opcional: Podrías enlazarlo a productos específicos con un ManyToManyField si no aplica a todo el carrito
+    # productos_aplicables = models.ManyToManyField('Producto', blank=True, related_name='promociones')
+
+    class Meta:
+        verbose_name = "Promoción"
+        verbose_name_plural = "Promociones"
+
+    def __str__(self):
+        return f"{self.nombre} - {self.get_tipo_descuento_display()} ({self.valor})"
