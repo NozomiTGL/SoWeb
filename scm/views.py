@@ -337,15 +337,15 @@ def nivel_madurez(request):
     }
     return render(request, 'scm/nivel_madurez.html', context)
 
-@login_required
-def catalogo_clientes(request):
-    """Vitrina comercial pública para los clientes B2B."""
-    # Obtenemos todos los servicios activos
-    productos = Producto.objects.all().order_by('categoria', 'nombre')
+#@login_required
+#def catalogo_clientes(request):
+#   """Vitrina comercial pública para los clientes B2B."""
+#    # Obtenemos todos los servicios activos
+#    productos = Producto.objects.all().order_by('categoria', 'nombre')
     
-    return render(request, 'scm/catalogo_clientes.html', {
-        'productos': productos
-    })
+#    return render(request, 'scm/catalogo_clientes.html', {
+#        'productos': productos
+#    })
 
 @login_required
 def catalogo_general(request):

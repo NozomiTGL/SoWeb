@@ -11,28 +11,62 @@
   </head>
   <body class="d-flex flex-column min-vh-100 bg-light">
 
-    <nav class="navbar navbar-expand-lg navbar-dark navbar-soweb py-3 mb-4">
+    <nav class="navbar navbar-expand-lg navbar-dark navbar-soweb py-3 mb-4 shadow-sm">
       <div class="container">
-        <a class="navbar-brand fw-bold d-flex align-items-center gap-2" href="#">
+        <a class="navbar-brand fw-bold d-flex align-items-center gap-2" href="{% url 'catalogo_tienda' %}">
           <i class="bi bi-box-seam-fill text-primary"></i>
           <span>SoWeb <span class="text-primary fs-6">Servicios</span></span>
         </a>
 
-        <div class="collapse navbar-collapse">
+        <button class="navbar-toggler border-0" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
+          <span class="navbar-toggler-icon"></span>
+        </button>
+
+        <div class="collapse navbar-collapse" id="navbarNav">
+          <!-- Menú Principal con Catálogo, Mis Pedidos y Monedero -->
           <ul class="navbar-nav me-auto ms-lg-4">
             <li class="nav-item">
-              <a class="nav-link px-3 active" href="{% url 'catalogo_clientes' %}">
-                <i class="bi bi-shop me-1"></i> Nuestro Catálogo
+              <a class="nav-link px-3" href="{% url 'catalogo_tienda' %}">
+                <i class="bi bi-shop me-1"></i> Catálogo
+              </a>
+            </li>
+            <li class="nav-item">
+              <a class="nav-link px-3" href="{% url 'mis_pedidos' %}">
+                <i class="bi bi-receipt me-1"></i> Mis Pedidos
+              </a>
+            </li>
+            <li class="nav-item">
+              <a class="nav-link px-3" href="{% url 'ver_monedero' %}">
+                <i class="bi bi-wallet2 me-1"></i> Mi Monedero
               </a>
             </li>
           </ul>
 
-          <div class="d-flex align-items-center gap-3">
-            <div class="text-end d-none d-lg-block">
+          <div class="d-flex align-items-center gap-3 mt-3 mt-lg-0">
+            
+            <!-- Badge Saldo Monedero en Vivo -->
+            <a href="{% url 'ver_monedero' %}" class="btn btn-outline-success btn-sm rounded-pill border-0 shadow-sm bg-white px-3 py-2 d-flex align-items-center gap-2 text-decoration-none">
+              <i class="bi bi-wallet2 fs-6 text-success"></i>
+              <span class="fw-semibold text-dark">${{ user.monedero.saldo_actual|default:"0.00" }}</span>
+            </a>
+
+            <!-- Botón del Carrito -->
+            <a href="{% url 'ver_carrito' %}" class="btn btn-outline-primary btn-sm rounded-pill position-relative border-0 shadow-sm bg-white px-3 py-2 d-flex align-items-center gap-2">
+              <i class="bi bi-cart3 fs-6"></i>
+              <span class="d-lg-none fw-semibold">Mi Carrito</span>
+              <span class="position-absolute top-0 start-100 translate-middle badge rounded-pill bg-danger">
+                {% if user.carrito.detalles.count %}{{ user.carrito.detalles.count }}{% else %}0{% endif %}
+              </span>
+            </a>
+
+            <!-- Saludo y Perfil -->
+            <div class="text-end d-none d-lg-block border-start border-secondary ps-3 ms-2">
               <small class="text-muted d-block leading-none">Bienvenido,</small>
               <span class="text-white fw-semibold small">{{ user.first_name|default:user.username }}</span>
             </div>
-            <form method="post" action="{% url 'logout' %}">
+            
+            <!-- Cerrar Sesión -->
+            <form method="post" action="{% url 'logout' %}" class="ms-2">
               {% csrf_token %}
               <button type="submit" class="btn btn-outline-light btn-sm rounded-3">
                 <i class="bi bi-box-arrow-right me-1"></i> Salir

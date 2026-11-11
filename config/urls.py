@@ -6,7 +6,8 @@ urlpatterns = [
     path('admin/', admin.site.urls),
     path('accounts/', include('django.contrib.auth.urls')),  # Rutas nativas de Login/Logout
     path('accounts/register/', crm_views.registrar_usuario, name='registrar_usuario'),
-    path('', include('crm.urls')),  # Rutas internas protegidas del CRM
+    path('', include('crm.urls')),      # Rutas internas protegidas del CRM
     path('scm/', include('scm.urls')),  # Rutas internas protegidas del SCM
-    path('erp/', include('erp.urls')), # Rutas internas protegidas del ERP
+    path('erp/', include('erp.urls')),  # Rutas internas protegidas del ERP
+    path('tienda/', include('tienda.urls')),  # Rutas internas protegidas del Tienda
 ]

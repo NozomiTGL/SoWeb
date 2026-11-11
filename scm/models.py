@@ -1,6 +1,7 @@
 from django.db import models
 from django.contrib.auth.models import User
 from django.utils import timezone
+from decimal import Decimal
 
 class Proveedor(models.Model):
     """
@@ -26,7 +27,6 @@ class Producto(models.Model):
     El 'stock' simboliza la capacidad operativa disponible (ranuras de desarrollo, 
     espacios en servidor, horas de soporte).
     """
-    # Opciones de categoría adaptadas a una agencia TIC
     CATEGORIA_CHOICES = [
         ('hosting', 'Infraestructura y Hosting'),
         ('desarrollo', 'Desarrollo Web / Apps'),
@@ -34,7 +34,6 @@ class Producto(models.Model):
         ('soporte', 'Horas de Soporte / Mantenimiento'),
     ]
 
-    # Opciones para Estrategia Logística
     ESTRATEGIA_CHOICES = [
         ('PUSH', 'PUSH (Producción/compra anticipada)'),
         ('PULL', 'PULL (Según demanda real)'),
@@ -45,7 +44,7 @@ class Producto(models.Model):
     categoria = models.CharField(max_length=50, choices=CATEGORIA_CHOICES, verbose_name="Categoría")
     
     # ----------------------------------------------------
-    # NUEVOS CAMPOS E-COMMERCE (ETAPA 4)
+    # CAMPOS E-COMMERCE (ETAPA 4)
     # ----------------------------------------------------
     precio_venta = models.DecimalField(max_digits=10, decimal_places=2, default=0.00, verbose_name="Precio de Venta Público")
     imagen = models.ImageField(upload_to='productos/', blank=True, null=True, verbose_name="Imagen del Servicio/Producto")
@@ -67,7 +66,7 @@ class Producto(models.Model):
     
     # Llave foránea hacia el modelo Proveedor
     proveedor = models.ForeignKey(
-        Proveedor, 
+        'Proveedor', 
         on_delete=models.RESTRICT, 
         related_name='productos',
         verbose_name="Proveedor de infraestructura"
@@ -79,6 +78,15 @@ class Producto(models.Model):
         verbose_name = "Producto / Servicio"
         verbose_name_plural = "Productos / Servicios"
         ordering = ['nombre']
+
+    @property
+    def precio_con_iva(self):
+        """
+        Calcula el precio público aplicando el 16% de IVA al costo unitario.
+        """
+        if self.costo_unitario:
+            return round(self.costo_unitario * Decimal('1.16'), 2)
+        return Decimal('0.00')
 
     def __str__(self):
         return f"{self.nombre} (Stock: {self.stock_actual})"

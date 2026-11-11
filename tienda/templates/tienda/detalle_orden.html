@@ -1,0 +1,54 @@
+{% extends 'crm/base_cliente.html' %}
+
+{% block content %}
+<div class="py-4">
+    <div class="d-flex justify-content-between align-items-center mb-4 d-print-none">
+        <a href="{% url 'mis_pedidos' %}" class="btn btn-outline-secondary btn-sm rounded-pill">
+            <i class="bi bi-arrow-left me-1"></i> Volver a Mis Pedidos
+        </a>
+        <button onclick="window.print()" class="btn btn-primary btn-sm rounded-pill px-3">
+            <i class="bi bi-printer me-1"></i> Imprimir Comprobante
+        </button>
+    </div>
+
+    <div class="card border-0 shadow-sm rounded-4 p-5 bg-white">
+        <!-- Encabezado del Comprobante -->
+        <div class="row mb-4 align-items-center border-bottom pb-4">
+            <div class="col-6">
+                <h3 class="fw-bold text-primary mb-0"><i class="bi bi-box-seam-fill me-2"></i>SoWeb ERP</h3>
+                <small class="text-muted">Comprobante de Orden Empresarial</small>
+            </div>
+            <div class="col-6 text-end">
+                <h5 class="fw-bold text-dark mb-0">FOLIO: #{{ orden.id }}</h5>
+                <span class="badge bg-success rounded-pill mt-1">ESTADO: {{ orden.estado|default:"Procesada"|upper }}</span>
+            </div>
+        </div>
+
+        <!-- Información del Cliente -->
+        <div class="row mb-4">
+            <div class="col-6">
+                <h6 class="text-muted text-uppercase small fw-bold">DATOS DEL CLIENTE</h6>
+                <p class="mb-0 fw-bold text-dark">{{ orden.cliente.nombre }}</p>
+                <p class="mb-0 text-muted">{{ orden.cliente.empresa|default:"Empresa Particular" }}</p>
+                <p class="mb-0 text-muted">{{ orden.cliente.correo|default:user.email }}</p>
+            </div>
+            <div class="col-6 text-end">
+                <h6 class="text-muted text-uppercase small fw-bold">RESUMEN FINANCIERO</h6>
+                <p class="mb-0 text-muted">Módulo origen: <strong>ERP / E-Commerce</strong></p>
+                <p class="mb-0 text-muted">Método de transacción: <strong>Electrónico / Virtual</strong></p>
+            </div>
+        </div>
+
+        <!-- Resumen de Totales -->
+        <div class="bg-light p-4 rounded-4 text-center mt-3">
+            <span class="text-muted d-block mb-1">Monto Total Liquidado:</span>
+            <h1 class="fw-bold text-success display-5 mb-0">${{ orden.total }}</h1>
+        </div>
+
+        <div class="mt-5 pt-4 text-center text-muted border-top small">
+            <p class="mb-0">Gracias por su compra en <strong>SoWeb ERP & CRM System</strong>.</p>
+            <p>Este comprobante certifica la contratación de servicios e impacto directo en inventario SCM.</p>
+        </div>
+    </div>
+</div>
+{% endblock %}

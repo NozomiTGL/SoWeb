@@ -43,7 +43,8 @@ def dashboard(request):
     # 1. REDIRECCIÓN B2B (Clientes externos)
     # ==========================================
     if hasattr(request.user, 'perfil_cliente'):
-        return redirect('catalogo_clientes')
+        # Redirigimos al catálogo de la nueva app de tienda
+        return redirect('catalogo_tienda')
 
     # ==========================================
     # 2. REDIRECCIÓN LOGÍSTICA (Fuera del CRM)
@@ -54,7 +55,7 @@ def dashboard(request):
     # ==========================================
     # 3. LÓGICA NORMAL CRM (Admin y Ventas)
     # ==========================================
-    if request.user.is_staff or (hasattr(request.user, 'perfil_trabajador') and request.user.perfil_trabajador.rol == 'admin'):
+    if request.user.is_superuser or request.user.is_staff or (hasattr(request.user, 'perfil_trabajador') and request.user.perfil_trabajador.rol == 'admin'):
         clientes_qs = Cliente.objects.all()
         interacciones_qs = Interaccion.objects.all()
     else:

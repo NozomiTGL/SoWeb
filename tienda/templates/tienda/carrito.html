@@ -1,0 +1,118 @@
+{% extends 'crm/base_cliente.html' %}
+
+{% block content %}
+<div class="py-4">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h2 class="fw-bold text-dark mb-0"><i class="bi bi-cart3 me-2 text-primary"></i>Mi Carrito de Compras</h2>
+        <a href="{% url 'catalogo_tienda' %}" class="btn btn-outline-secondary btn-sm rounded-pill">
+            <i class="bi bi-arrow-left me-1"></i> Seguir comprando
+        </a>
+    </div>
+
+    <!-- Mensajes del Sistema -->
+    {% if messages %}
+        {% for message in messages %}
+            <div class="alert alert-{{ message.tags }} alert-dismissible fade show rounded-3 shadow-sm" role="alert">
+                {{ message }}
+                <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+            </div>
+        {% endfor %}
+    {% endif %}
+
+    {% if detalles %}
+    <div class="row g-4">
+        <!-- Tabla de Productos en el Carrito -->
+        <div class="col-lg-8">
+            <div class="card border-0 shadow-sm rounded-4 overflow-hidden">
+                <div class="table-responsive">
+                    <table class="table table-hover align-middle mb-0">
+                        <thead class="bg-light">
+                            <tr>
+                                <th class="ps-4">Producto / Servicio</th>
+                                <th class="text-center">Cantidad</th>
+                                <th class="text-end">Precio Unit. (c/IVA)</th>
+                                <th class="text-end">Subtotal</th>
+                                <th class="text-center pe-4">Acciones</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for item in detalles %}
+                            <tr>
+                                <td class="ps-4">
+                                    <div class="d-flex align-items-center gap-3">
+                                        {% if item.producto.imagen %}
+                                            <img src="{{ item.producto.imagen.url }}" alt="{{ item.producto.nombre }}" class="rounded-3" style="width: 48px; height: 48px; object-fit: cover;">
+                                        {% else %}
+                                            <div class="bg-light text-primary rounded-3 d-flex align-items-center justify-content-center" style="width: 48px; height: 48px;">
+                                                <i class="bi bi-hdd-network fs-5"></i>
+                                            </div>
+                                        {% endif %}
+                                        <div>
+                                            <h6 class="fw-bold mb-0 text-dark">{{ item.producto.nombre }}</h6>
+                                            <small class="text-muted">{{ item.producto.get_categoria_display }}</small>
+                                        </div>
+                                    </div>
+                                </td>
+                                <td class="text-center fw-semibold">{{ item.cantidad }}</td>
+                                <td class="text-end">${{ item.precio_unitario }}</td>
+                                <td class="text-end fw-bold text-dark">${{ item.subtotal }}</td>
+                                <td class="text-center pe-4">
+                                    <a href="{% url 'eliminar_item_carrito' item.id %}" class="btn btn-outline-danger btn-sm rounded-circle border-0" title="Eliminar del carrito">
+                                        <i class="bi bi-trash"></i>
+                                    </a>
+                                </td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+                <div class="card-footer bg-white border-top p-3 d-flex justify-content-between align-items-center">
+                    <a href="{% url 'vaciar_carrito' %}" class="btn btn-outline-danger btn-sm rounded-pill">
+                        <i class="bi bi-trash me-1"></i> Vaciar carrito
+                    </a>
+                    <span class="text-muted small">Precios congelados al agregar.</span>
+                </div>
+            </div>
+        </div>
+
+        <!-- Resumen del Pedido -->
+        <div class="col-lg-4">
+            <div class="card border-0 shadow-sm rounded-4 p-4">
+                <h5 class="fw-bold text-dark mb-4">Resumen del Pedido</h5>
+                
+                <div class="d-flex justify-content-between mb-2">
+                    <span class="text-muted">Subtotal (con IVA):</span>
+                    <span class="fw-bold text-dark">${{ subtotal_carrito }}</span>
+                </div>
+                <div class="d-flex justify-content-between mb-3">
+                    <span class="text-muted">Entrega digital / Servicios:</span>
+                    <span class="text-success fw-semibold">Gratis</span>
+                </div>
+                
+                <hr>
+
+                <div class="d-flex justify-content-between mb-4">
+                    <span class="fs-5 fw-bold text-dark">Total a Pagar:</span>
+                    <span class="fs-4 fw-bold text-primary">${{ subtotal_carrito }}</span>
+                </div>
+
+                <a href="{% url 'checkout' %}" class="btn btn-primary btn-lg rounded-pill w-100 fw-semibold shadow-sm">
+                    Continuar al Checkout <i class="bi bi-arrow-right ms-2"></i>
+                </a>
+            </div>
+        </div>
+    </div>
+    {% else %}
+    <div class="text-center py-5 card border-0 shadow-sm rounded-4">
+        <i class="bi bi-cart-x text-muted mb-3" style="font-size: 4rem;"></i>
+        <h4 class="fw-bold text-dark">Tu carrito está vacío</h4>
+        <p class="text-muted mb-4">Explora nuestro catálogo y agrega los servicios que necesites.</p>
+        <div>
+            <a href="{% url 'catalogo_tienda' %}" class="btn btn-primary rounded-pill px-4 fw-semibold">
+                Ver Catálogo
+            </a>
+        </div>
+    </div>
+    {% endif %}
+</div>
+{% endblock %}

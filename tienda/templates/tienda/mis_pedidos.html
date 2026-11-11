@@ -1,0 +1,64 @@
+{% extends 'crm/base_cliente.html' %}
+
+{% block content %}
+<div class="py-4">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h2 class="fw-bold text-dark mb-0"><i class="bi bi-receipt me-2 text-primary"></i>Mis Pedidos & Órdenes</h2>
+        <a href="{% url 'catalogo_tienda' %}" class="btn btn-outline-primary btn-sm rounded-pill">
+            <i class="bi bi-shop me-1"></i> Ir al Catálogo
+        </a>
+    </div>
+
+    {% if ordenes %}
+    <div class="card border-0 shadow-sm rounded-4 overflow-hidden">
+        <div class="table-responsive">
+            <table class="table table-hover align-middle mb-0">
+                <thead class="bg-light">
+                    <tr>
+                        <th class="ps-4">Folio de Orden</th>
+                        <th class="text-center">Estado</th>
+                        <th class="text-end">Monto Total</th>
+                        <th class="text-center pe-4">Acción</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for orden in ordenes %}
+                    <tr>
+                        <td class="ps-4">
+                            <span class="fw-bold text-dark">Orden #{{ orden.id }}</span>
+                        </td>
+                        <td class="text-center">
+                            {% if orden.estado == 'Procesada' %}
+                                <span class="badge bg-success-subtle text-success border border-success rounded-pill px-3">Procesada</span>
+                            {% else %}
+                                <span class="badge bg-warning-subtle text-warning border border-warning rounded-pill px-3">{{ orden.estado|default:"Pendiente" }}</span>
+                            {% endif %}
+                        </td>
+                        <td class="text-end fw-bold text-success fs-5">
+                            ${{ orden.total }}
+                        </td>
+                        <td class="text-center pe-4">
+                            <a href="{% url 'detalle_orden' orden.id %}" class="btn btn-sm btn-outline-primary rounded-pill px-3 fw-semibold">
+                                <i class="bi bi-file-earmark-text me-1"></i> Ver Comprobante
+                            </a>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+    {% else %}
+    <div class="text-center py-5 card border-0 shadow-sm rounded-4">
+        <i class="bi bi-inbox text-muted mb-3" style="font-size: 4rem;"></i>
+        <h4 class="fw-bold text-dark">Aún no has realizado pedidos</h4>
+        <p class="text-muted mb-4">Tus compras y órdenes procesadas aparecerán aquí.</p>
+        <div>
+            <a href="{% url 'catalogo_tienda' %}" class="btn btn-primary rounded-pill px-4 fw-semibold">
+                Ver Catálogo
+            </a>
+        </div>
+    </div>
+    {% endif %}
+</div>
+{% endblock %}
