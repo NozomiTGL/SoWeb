@@ -54,4 +54,11 @@ urlpatterns = [
     path('api/', include(router.urls)),
     # Enlace de registro público para clientes:
     path('registro-cliente/', views.registro_cliente_publico, name='registro_cliente_publico'),
+
+    path('tickets/', views.mis_tickets, name='mis_tickets'),
+
+    # Rutas del Rol de Soporte
+    path('soporte/tickets/', views.panel_soporte, name='panel_soporte'),
+    path('soporte/tickets/<int:ticket_id>/responder/', views.responder_ticket, name='responder_ticket'),
+    path('tickets/<int:ticket_id>/reabrir/', views.reabrir_ticket, name='reabrir_ticket'),
 ]

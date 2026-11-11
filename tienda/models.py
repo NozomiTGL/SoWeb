@@ -83,3 +83,21 @@ class CodigoRecarga(models.Model):
     def __str__(self):
         estado = "Canjeado" if self.usado else "Disponible"
         return f"{self.codigo} - ${self.monto} ({estado})"
+
+class MovimientoMonedero(models.Model):
+    TIPO_CHOICES = (
+        ('Recarga', 'Recarga de Saldo'),
+        ('Compra', 'Consumo por Compra'),
+    )
+
+    monedero = models.ForeignKey(Monedero, on_delete=models.CASCADE, related_name='movimientos')
+    tipo = models.CharField(max_length=10, choices=TIPO_CHOICES)
+    monto = models.DecimalField(max_digits=10, decimal_places=2)
+    descripcion = models.CharField(max_length=255)
+    fecha = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        ordering = ['-fecha']
+
+    def __str__(self):
+        return f"{self.tipo} - ${self.monto} ({self.monedero.usuario.username})"

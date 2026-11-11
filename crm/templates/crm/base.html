@@ -33,8 +33,8 @@
             {# ================================================================= #}
             {% if user.is_authenticated and not user.perfil_cliente %}
 
-                <!-- MÓDULO CRM (Oculto solo para Logística) -->
-                {% if user.is_superuser or user.perfil_trabajador.rol == 'admin' or user.perfil_trabajador.rol == 'vendedor' or not user.is_staff %}
+                <!-- MÓDULO CRM (Oculto solo para Logística y Soporte) -->
+                {% if user.is_superuser or user.perfil_trabajador.rol == 'admin' or user.perfil_trabajador.rol == 'vendedor' %}
                 <li class="nav-item dropdown">
                   <a class="nav-link dropdown-toggle px-3 d-flex align-items-center gap-1" href="#" id="navbarDropdownCRM" role="button" data-bs-toggle="dropdown">
                     <i class="bi bi-people-fill"></i><span>Módulo CRM</span>
@@ -49,7 +49,17 @@
                 </li>
                 {% endif %}
 
-                <!-- MÓDULO SCM -->
+                <!-- ACCESO DIRECTO SOPORTE (Staff / Rol Soporte / Admin) -->
+                {% if user.is_superuser or user.is_staff or user.groups.all.0.name == 'Soporte' %}
+                <li class="nav-item">
+                  <a class="nav-link px-3 d-flex align-items-center gap-1 text-warning fw-semibold" href="{% url 'panel_soporte' %}">
+                    <i class="bi bi-headset"></i><span>Tickets Soporte</span>
+                  </a>
+                </li>
+                {% endif %}
+
+                <!-- MÓDULO SCM (Oculto para Soporte puro) -->
+                {% if user.is_superuser or user.perfil_trabajador.rol == 'admin' or user.perfil_trabajador.rol == 'logistica' or user.perfil_trabajador.rol == 'vendedor' %}
                 <li class="nav-item dropdown">
                   <a class="nav-link dropdown-toggle px-3 position-relative d-flex align-items-center gap-1" href="#" id="navbarDropdownSCM" role="button" data-bs-toggle="dropdown">
                     <i class="bi bi-box-seam-fill"></i><span>Módulo SCM</span>
@@ -79,8 +89,10 @@
                     {% endif %}
                   </ul>
                 </li>
+                {% endif %}
 
-                <!-- MÓDULO ERP -->
+                <!-- MÓDULO ERP (Oculto para Soporte puro) -->
+                {% if user.is_superuser or user.perfil_trabajador.rol == 'admin' or user.perfil_trabajador.rol == 'vendedor' or user.perfil_trabajador.rol == 'logistica' %}
                 <li class="nav-item dropdown">
                   <a class="nav-link dropdown-toggle px-3 d-flex align-items-center gap-1" href="#" id="navbarDropdownERP" role="button" data-bs-toggle="dropdown">
                     <i class="bi bi-diagram-3-fill"></i><span>Módulo ERP</span>
@@ -94,7 +106,7 @@
                     
                     <li><a class="dropdown-item py-2" href="{% url 'lista_ordenes' %}"><i class="bi bi-list-check text-primary me-2"></i>Órdenes (ERP)</a></li>
                     
-                    {% if user.is_superuser or user.perfil_trabajador.rol == 'admin' or user.perfil_trabajador.rol == 'vendedor' or not user.is_staff %}
+                    {% if user.is_superuser or user.perfil_trabajador.rol == 'admin' or user.perfil_trabajador.rol == 'vendedor' %}
                     <li><a class="dropdown-item py-2" href="{% url 'nueva_orden_paso1' %}"><i class="bi bi-plus-circle-fill text-primary me-2"></i>Nueva Orden (Venta)</a></li>
                     {% endif %}
 
@@ -104,6 +116,7 @@
                     {% endif %}
                   </ul>
                 </li>
+                {% endif %}
 
                 <!-- ACCESOS (Solo Admin) -->
                 {% if user.is_superuser or user.perfil_trabajador.rol == 'admin' %}
@@ -140,6 +153,7 @@
                 <!-- Opciones para ADMINISTRADOR -->
                 {% if user.is_superuser or user.perfil_trabajador.rol == 'admin' %}
                     <li><a class="dropdown-item py-2 fw-semibold text-primary" href="{% url 'dashboard' %}"><i class="bi bi-check2-circle me-2"></i>Inicio</a></li>
+                    <li><a class="dropdown-item py-2" href="{% url 'panel_soporte' %}"><i class="bi bi-headset text-warning me-2"></i>Tickets de Soporte</a></li>
                     <li><a class="dropdown-item py-2" href="{% url 'lista_clientes' %}"><i class="bi bi-check2 text-success me-2"></i>Clientes (CRM)</a></li>
                     <li><a class="dropdown-item py-2" href="{% url 'lista_productos' %}"><i class="bi bi-check2 text-success me-2"></i>Productos (SCM)</a></li>
                     <li><a class="dropdown-item py-2" href="{% url 'vista_inventario' %}"><i class="bi bi-check2 text-success me-2"></i>Inventario (SCM)</a></li>
@@ -147,8 +161,11 @@
                     <li><a class="dropdown-item py-2" href="{% url 'reportes_metricas' %}"><i class="bi bi-check2 text-success me-2"></i>Reportes</a></li>
                     <li><a class="dropdown-item py-2" href="{% url 'nivel_erp' %}"><i class="bi bi-check2 text-success me-2"></i>Nivel ERP</a></li>
                     <li><a class="dropdown-item py-2" href="{% url 'lista_usuarios' %}"><i class="bi bi-check2 text-success me-2"></i>Usuarios</a></li>
-                    <li><a class="dropdown-item py-2" href="#"><i class="bi bi-check2 text-success me-2"></i>Configuración</a></li>
-                
+
+                <!-- Opciones para ROL SOPORTE -->
+                {% elif user.groups.all.0.name == 'Soporte' or user.username == 'soporte' %}
+                    <li><a class="dropdown-item py-2 fw-semibold text-warning" href="{% url 'panel_soporte' %}"><i class="bi bi-headset me-2"></i>Panel de Tickets</a></li>
+
                 <!-- Opciones para LOGÍSTICA -->
                 {% elif user.perfil_trabajador.rol == 'logistica' %}
                     <li><a class="dropdown-item py-2 fw-semibold text-primary" href="{% url 'catalogo_general' %}"><i class="bi bi-check2-circle me-2"></i>Inicio</a></li>
@@ -189,6 +206,8 @@
                     Cliente B2B
                 {% elif user.is_superuser %}
                     Administrador
+                {% elif user.groups.all.0.name == 'Soporte' or user.username == 'soporte' %}
+                    Agente de Soporte
                 {% elif user.perfil_trabajador %}
                     {{ user.perfil_trabajador.get_rol_display }}
                 {% else %}
@@ -309,4 +328,4 @@
       {% endif %}
     {% endif %}
   </body>
-</html>
+</html>-

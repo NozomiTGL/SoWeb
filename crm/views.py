@@ -19,6 +19,9 @@ from django.contrib.auth.models import User
 from django.contrib.auth.forms import UserCreationForm
 from .models import Cliente, Interaccion
 from .models import Cliente, Interaccion, PerfilTrabajador
+from django.contrib import messages
+from .models import TicketSoporte
+
 
 def es_admin(user):
     """
@@ -37,14 +40,19 @@ def es_admin(user):
 def dashboard(request):
     """
     Despliega el tablero principal con métricas clave del sistema.
-    Redirige a los usuarios B2B y a Logística fuera de esta vista.
+    Redirige a los usuarios B2B, Soporte y Logística fuera de esta vista.
     """
     # ==========================================
     # 1. REDIRECCIÓN B2B (Clientes externos)
     # ==========================================
     if hasattr(request.user, 'perfil_cliente'):
-        # Redirigimos al catálogo de la nueva app de tienda
         return redirect('catalogo_tienda')
+
+    # ==========================================
+    # 1.5 REDIRECCIÓN SOPORTE (Atención a Tickets)
+    # ==========================================
+    if request.user.groups.filter(name='Soporte').exists() and not request.user.is_superuser:
+        return redirect('panel_soporte')
 
     # ==========================================
     # 2. REDIRECCIÓN LOGÍSTICA (Fuera del CRM)
@@ -584,3 +592,108 @@ def registro_cliente_publico(request):
 
     return render(request, 'crm/registro_publico.html')
 
+@login_required
+def mis_tickets(request):
+    """
+    Despliega la pantalla de creación y seguimiento de tickets de atención al cliente.
+    """
+    if request.method == 'POST':
+        asunto = request.POST.get('asunto')
+        mensaje = request.POST.get('mensaje', '').strip()
+
+        if not mensaje:
+            messages.error(request, "El mensaje de la consulta no puede estar vacío.")
+            return redirect('mis_tickets')
+
+        ticket = TicketSoporte.objects.create(
+            usuario=request.user,
+            asunto=asunto,
+            mensaje=mensaje,
+            estado='En proceso'
+        )
+        messages.success(request, f"Ticket T-{ticket.id:03d} registrado exitosamente. Nuestro equipo revisará tu solicitud.")
+        return redirect('mis_tickets')
+
+    tickets = TicketSoporte.objects.filter(usuario=request.user)
+
+    context = {
+        'tickets': tickets
+    }
+    return render(request, 'crm/mis_tickets.html', context)
+
+def es_soporte(user):
+    """
+    Verifica si el usuario es staff o pertenece al grupo 'Soporte'.
+    """
+    return user.is_staff or user.groups.filter(name='Soporte').exists()
+
+
+@login_required
+@user_passes_test(es_soporte, login_url='catalogo_tienda')
+def panel_soporte(request):
+    """
+    Vista exclusiva para el rol de Soporte: Lista todos los tickets entrantes.
+    """
+    estado_filtro = request.GET.get('estado', '')
+    
+    if estado_filtro:
+        tickets = TicketSoporte.objects.filter(estado=estado_filtro)
+    else:
+        tickets = TicketSoporte.objects.all()
+
+    context = {
+        'tickets': tickets,
+        'estado_filtro': estado_filtro,
+        'total_pendientes': TicketSoporte.objects.filter(estado='En proceso').count()
+    }
+    return render(request, 'crm/panel_soporte.html', context)
+
+
+@login_required
+@user_passes_test(es_soporte, login_url='catalogo_tienda')
+def responder_ticket(request, ticket_id):
+    """
+    Procesa la respuesta enviada por el agente de soporte y actualiza el estado.
+    """
+    ticket = get_object_or_404(TicketSoporte, id=ticket_id)
+
+    if request.method == 'POST':
+        respuesta_texto = request.POST.get('respuesta', '').strip()
+        nuevo_estado = request.POST.get('estado', 'Respondido')
+
+        if not respuesta_texto:
+            messages.error(request, "La respuesta no puede estar vacía.")
+            return redirect('panel_soporte')
+
+        ticket.respuesta = respuesta_texto
+        ticket.estado = nuevo_estado
+        ticket.save()
+
+        messages.success(request, f"Se respondió y actualizó el Ticket T-{ticket.id:03d} a '{nuevo_estado}'.")
+
+    return redirect('panel_soporte')
+
+@login_required
+def reabrir_ticket(request, ticket_id):
+    """
+    Permite al cliente agregar información o una aclaración adicional a un ticket existente,
+    cambiando su estado nuevamente a 'En proceso'.
+    """
+    ticket = get_object_or_404(TicketSoporte, id=ticket_id, usuario=request.user)
+
+    if request.method == 'POST':
+        nuevo_mensaje = request.POST.get('nuevo_mensaje', '').strip()
+
+        if not nuevo_mensaje:
+            messages.error(request, "El mensaje de seguimiento no puede estar vacío.")
+            return redirect('mis_tickets')
+
+        # Anexamos la repregunta al historial de mensajes del ticket
+        fecha_str = timezone.now().strftime("%d/%m/%Y %I:%M %p")
+        ticket.mensaje += f"\n\n--- Seguimiento del cliente ({fecha_str}) ---\n{nuevo_mensaje}"
+        ticket.estado = 'En proceso'
+        ticket.save()
+
+        messages.success(request, f"Respuesta enviada para el Ticket T-{ticket.id:03d}. Se ha notificado al equipo de soporte.")
+
+    return redirect('mis_tickets')

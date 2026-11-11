@@ -11,6 +11,7 @@ from erp.models import OrdenEmpresarial
 from crm.models import Cliente
 from django.db import transaction
 from .models import Carrito, CarritoDetalle, Monedero, CodigoRecarga
+from .models import Carrito, CarritoDetalle, Monedero, MovimientoMonedero
 
 @login_required
 def catalogo_tienda(request):
@@ -132,47 +133,53 @@ def ver_monedero(request):
 @login_required
 def recargar_monedero(request):
     """
-    Recarga el monedero con códigos predeterminados fijados en código 
-    o con cualquier tarjeta simulada.
+    Procesa la recarga de saldo e historial de movimientos.
     """
     if request.method == 'POST':
-        tipo_recarga = request.POST.get('tipo_recarga')
+        codigo = request.POST.get('codigo_promo', '').strip().upper()
+        monto_custom = request.POST.get('monto_custom')
+        
         monedero, _ = Monedero.objects.get_or_create(usuario=request.user)
+        monto_recargado = Decimal('0.00')
 
-        # 1. RECARGA POR CÓDIGO PREDETERMINADO (Sin Base de Datos)
-        if tipo_recarga == 'codigo':
-            codigo_input = request.POST.get('codigo', '').strip().upper()
+        codigos_validos = {
+            'SOWEB500': Decimal('500.00'),
+            'SOWEB1000': Decimal('1000.00'),
+            'RECARGA1000': Decimal('1000.00'),
+            'PROMO2026': Decimal('2000.00'),
+            'SOWEB100': Decimal('100.00'),
+        }
 
-            # Diccionario de códigos predeterminados y sus montos
-            CODIGOS_VALIDOS = {
-                'SOWEB100': 100.00,
-                'SOWEB500': 500.00,
-                'SOWEB1000': 1000.00,
-                'RECARGA1000': 1000.00,
-                'PROMO2026': 2000.00,
-            }
-
-            if codigo_input in CODIGOS_VALIDOS:
-                monto = CODIGOS_VALIDOS[codigo_input]
-                monedero.saldo_actual += Decimal(str(monto))
-                monedero.save()
-                messages.success(request, f"¡Código '{codigo_input}' canjeado! Se acreditaron ${monto:.2f} a tu monedero.")
-            else:
-                messages.error(request, "Código inválido. Prueba con: SOWEB500, SOWEB1000 o RECARGA1000.")
-
-        # 2. RECARGA POR TARJETA SIMULADA
-        elif tipo_recarga == 'tarjeta':
+        if codigo in codigos_validos:
+            monto_recargado = codigos_validos[codigo]
+            descripcion_mov = f"Recarga con código promocional: {codigo}"
+        elif monto_custom:
             try:
-                monto = Decimal(request.POST.get('monto', '0'))
-                if monto > 0:
-                    monedero.saldo_actual += monto
-                    monedero.save()
-                    messages.success(request, f"¡Pago simulado aprobado! Se agregaron ${monto:.2f} a tu monedero.")
-                else:
-                    messages.error(request, "Ingresa un monto válido mayor a $0.")
+                monto_recargado = Decimal(monto_custom)
+                if monto_recargado <= 0:
+                    messages.error(request, "Ingrese un monto mayor a cero.")
+                    return redirect('ver_monedero')
+                descripcion_mov = "Recarga de saldo con tarjeta/método simulado"
             except Exception:
-                messages.error(request, "Monto inválido.")
+                messages.error(request, "Monto de recarga no válido.")
+                return redirect('ver_monedero')
+        else:
+            messages.error(request, "Ingresa un código promocional válido o especifica un monto.")
+            return redirect('ver_monedero')
 
+        monedero.saldo_actual += monto_recargado
+        monedero.save()
+
+        # Registrar movimiento en el historial
+        MovimientoMonedero.objects.create(
+            monedero=monedero,
+            tipo='Recarga',
+            monto=monto_recargado,
+            descripcion=descripcion_mov
+        )
+
+        messages.success(request, f"¡Recarga exitosa! Se han acreditado ${monto_recargado:.2f} a tu monedero.")
+        
     return redirect('ver_monedero')
 
 
@@ -204,7 +211,8 @@ def checkout(request):
 @transaction.atomic
 def procesar_compra(request):
     """
-    Procesa la compra y deja el carrito listo para futuros usos.
+    Procesa la compra admitiendo múltiples medios de pago (Monedero, Tarjeta, PayPal y Mixto)
+    e integra el registro en el historial de movimientos del monedero.
     """
     if request.method != 'POST':
         return redirect('checkout')
@@ -222,8 +230,9 @@ def procesar_compra(request):
 
     monto_monedero_usado = Decimal('0.00')
     monto_tarjeta_usado = Decimal('0.00')
+    monto_paypal_usado = Decimal('0.00')
 
-    # Validaciones de pago
+    # Validaciones según método de pago elegido
     if metodo_pago == 'monedero':
         if monedero.saldo_actual < subtotal:
             messages.error(request, "Saldo insuficiente en tu monedero virtual. Elige otro método de pago o recarga saldo.")
@@ -237,6 +246,13 @@ def procesar_compra(request):
             return redirect('checkout')
         monto_tarjeta_usado = subtotal
 
+    elif metodo_pago == 'paypal':
+        email_paypal = request.POST.get('email_paypal', '').strip()
+        if not email_paypal or '@' not in email_paypal:
+            messages.error(request, "Error de transacción simulada: Ingrese un correo electrónico de PayPal válido.")
+            return redirect('checkout')
+        monto_paypal_usado = subtotal
+
     elif metodo_pago == 'mixto':
         if monedero.saldo_actual <= 0:
             messages.error(request, "No tienes saldo en el monedero para realizar pago mixto.")
@@ -249,18 +265,29 @@ def procesar_compra(request):
         if len(num_tarjeta) != 16:
             messages.error(request, "Ingrese una tarjeta válida para cubrir el saldo restante.")
             return redirect('checkout')
+    else:
+        messages.error(request, "Seleccione un método de pago válido.")
+        return redirect('checkout')
 
-    # Descuento del Monedero
+    # Descuento del Monedero si se utilizó + Registro en Historial
     if monto_monedero_usado > 0:
         monedero.saldo_actual -= monto_monedero_usado
         monedero.save()
+
+        # Registro en el historial de movimientos
+        MovimientoMonedero.objects.create(
+            monedero=monedero,
+            tipo='Compra',
+            monto=monto_monedero_usado,
+            descripcion="Consumo por compra en tienda"
+        )
 
     # Descuento de stock en SCM
     for item in detalles:
         item.producto.stock_actual -= item.cantidad
         item.producto.save()
 
-    # Obtener perfil del cliente
+    # Obtener perfil del cliente (CRM)
     cliente_obj = Cliente.objects.filter(usuario_login=request.user).first()
     if not cliente_obj:
         messages.error(request, "No se encontró un perfil de Cliente asociado a tu cuenta.")
@@ -273,15 +300,25 @@ def procesar_compra(request):
         estado='Procesada' if hasattr(OrdenEmpresarial, 'estado') else 'Pendiente'
     )
 
-    # Vaciar los detalles del carrito y restablecer su estado activo
+    # Vaciar los detalles del carrito y restablecer estado
     carrito.detalles.all().delete()
     carrito.estado = 'Activo'
     carrito.save()
 
+    # Formatear métodos usados para el mensaje final
+    metodos_usados = []
+    if monto_monedero_usado > 0:
+        metodos_usados.append(f"Monedero: ${monto_monedero_usado:.2f}")
+    if monto_tarjeta_usado > 0:
+        metodos_usados.append(f"Tarjeta: ${monto_tarjeta_usado:.2f}")
+    if monto_paypal_usado > 0:
+        metodos_usados.append(f"PayPal: ${monto_paypal_usado:.2f}")
+
+    resumen_pago = " | ".join(metodos_usados)
+
     messages.success(
         request, 
-        f"¡Compra completada con éxito! Orden #{orden.id} generada. "
-        f"(Pagado con Monedero: ${monto_monedero_usado:.2f} | Tarjeta: ${monto_tarjeta_usado:.2f})"
+        f"¡Compra completada con éxito! Orden #{orden.id} generada. ({resumen_pago})"
     )
     return redirect('catalogo_tienda')
 
@@ -315,3 +352,17 @@ def detalle_orden(request, orden_id):
         'orden': orden
     }
     return render(request, 'tienda/detalle_orden.html', context)
+
+@login_required
+def historial_monedero(request):
+    """
+    Despliega el historial completo de recargas y consumos del monedero.
+    """
+    monedero, _ = Monedero.objects.get_or_create(usuario=request.user)
+    movimientos = monedero.movimientos.all()
+
+    context = {
+        'monedero': monedero,
+        'movimientos': movimientos
+    }
+    return render(request, 'tienda/historial_monedero.html', context)

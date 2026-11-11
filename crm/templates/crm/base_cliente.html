@@ -4,7 +4,7 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>SoWeb - Catálogo de Servicios</title>
+    <title>SoWeb - Plataforma de Servicios</title>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet" />
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.0/font/bootstrap-icons.css" />
     <link rel="stylesheet" href="{% static 'css/styles.css' %}" />
@@ -23,7 +23,7 @@
         </button>
 
         <div class="collapse navbar-collapse" id="navbarNav">
-          <!-- Menú Principal con Catálogo, Mis Pedidos y Monedero -->
+          <!-- Navegación Principal -->
           <ul class="navbar-nav me-auto ms-lg-4">
             <li class="nav-item">
               <a class="nav-link px-3" href="{% url 'catalogo_tienda' %}">
@@ -40,18 +40,23 @@
                 <i class="bi bi-wallet2 me-1"></i> Mi Monedero
               </a>
             </li>
+            <li class="nav-item">
+              <a class="nav-link px-3" href="{% url 'mis_tickets' %}">
+                <i class="bi bi-headset me-1"></i> Soporte
+              </a>
+            </li>
           </ul>
 
           <div class="d-flex align-items-center gap-3 mt-3 mt-lg-0">
             
             <!-- Badge Saldo Monedero en Vivo -->
-            <a href="{% url 'ver_monedero' %}" class="btn btn-outline-success btn-sm rounded-pill border-0 shadow-sm bg-white px-3 py-2 d-flex align-items-center gap-2 text-decoration-none">
+            <a href="{% url 'ver_monedero' %}" class="btn btn-outline-success btn-sm rounded-pill border-0 shadow-sm bg-white px-3 py-2 d-flex align-items-center gap-2 text-decoration-none" title="Ver Monedero">
               <i class="bi bi-wallet2 fs-6 text-success"></i>
               <span class="fw-semibold text-dark">${{ user.monedero.saldo_actual|default:"0.00" }}</span>
             </a>
 
             <!-- Botón del Carrito -->
-            <a href="{% url 'ver_carrito' %}" class="btn btn-outline-primary btn-sm rounded-pill position-relative border-0 shadow-sm bg-white px-3 py-2 d-flex align-items-center gap-2">
+            <a href="{% url 'ver_carrito' %}" class="btn btn-outline-primary btn-sm rounded-pill position-relative border-0 shadow-sm bg-white px-3 py-2 d-flex align-items-center gap-2" title="Ver Carrito">
               <i class="bi bi-cart3 fs-6"></i>
               <span class="d-lg-none fw-semibold">Mi Carrito</span>
               <span class="position-absolute top-0 start-100 translate-middle badge rounded-pill bg-danger">
@@ -83,7 +88,7 @@
 
     <footer class="bg-white border-top py-3 mt-5">
       <div class="container text-center text-muted small">
-        © 2026 <strong>SoWeb</strong> • Catálogo de Servicios para Clientes
+        © 2026 <strong>SoWeb</strong> • Plataforma Integral de Servicios para Clientes
       </div>
     </footer>
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>

@@ -2,12 +2,7 @@
 
 {% block content %}
 <div class="py-4">
-    <div class="d-flex justify-content-between align-items-center mb-4">
-        <h2 class="fw-bold text-dark mb-0"><i class="bi bi-shield-check me-2 text-primary"></i>Finalizar Pedido</h2>
-        <a href="{% url 'ver_carrito' %}" class="btn btn-outline-secondary btn-sm rounded-pill">
-            <i class="bi bi-arrow-left me-1"></i> Volver al carrito
-        </a>
-    </div>
+    <h2 class="fw-bold text-dark mb-4"><i class="bi bi-credit-card-2-front me-2 text-primary"></i>Checkout y Confirmación de Pago</h2>
 
     {% if messages %}
         {% for message in messages %}
@@ -18,111 +13,105 @@
         {% endfor %}
     {% endif %}
 
-    <form action="{% url 'procesar_compra' %}" method="POST">
-        {% csrf_token %}
-        <div class="row g-4">
-            <!-- Selección del Método de Pago -->
-            <div class="col-lg-7">
-                <div class="card border-0 shadow-sm rounded-4 p-4 mb-4">
-                    <h5 class="fw-bold text-dark mb-3"><i class="bi bi-credit-card text-primary me-2"></i>Selecciona Forma de Pago</h5>
-
-                    <!-- Opción 1: Monedero Virtual -->
-                    <div class="form-check card-select p-3 border rounded-3 mb-3">
-                        <input class="form-check-input ms-1" type="radio" name="metodo_pago" id="pago_monedero" value="monedero" checked onclick="togglePagoFields()">
-                        <label class="form-check-label ms-2 w-100" for="pago_monedero">
-                            <div class="d-flex justify-content-between align-items-center">
-                                <div>
-                                    <strong class="d-block">Monedero Virtual SoWeb</strong>
-                                    <small class="text-muted">Saldo disponible: <strong>${{ monedero.saldo_actual }}</strong></small>
-                                </div>
-                                <i class="bi bi-wallet2 text-success fs-3"></i>
-                            </div>
-                        </label>
-                    </div>
-
-                    <!-- Opción 2: Tarjeta Directa -->
-                    <div class="form-check card-select p-3 border rounded-3 mb-3">
-                        <input class="form-check-input ms-1" type="radio" name="metodo_pago" id="pago_tarjeta" value="tarjeta" onclick="togglePagoFields()">
-                        <label class="form-check-label ms-2 w-100" for="pago_tarjeta">
-                            <div class="d-flex justify-content-between align-items-center">
-                                <div>
-                                    <strong class="d-block">Tarjeta de Débito / Crédito (Simulada)</strong>
-                                    <small class="text-muted">Visa, Mastercard, American Express</small>
-                                </div>
-                                <i class="bi bi-credit-card-2-front text-primary fs-3"></i>
-                            </div>
-                        </label>
-                    </div>
-
-                    <!-- Campos Formularios de Tarjeta -->
-                    <div id="seccion_tarjeta" class="p-3 bg-light rounded-3 d-none mb-3">
-                        <h6 class="fw-bold small text-muted mb-2">DATOS DE LA TARJETA SIMULADA</h6>
-                        <div class="mb-2">
-                            <input type="text" name="num_tarjeta" maxlength="16" class="form-control rounded-3" placeholder="Número de tarjeta (16 dígitos)">
+    <div class="row g-4">
+        <!-- Resumen de Productos -->
+        <div class="col-lg-5 order-lg-2">
+            <div class="card border-0 shadow-sm rounded-4 p-4 bg-white sticky-top" style="top: 90px;">
+                <h5 class="fw-bold text-dark mb-3">Resumen del Pedido</h5>
+                <ul class="list-group list-group-flush mb-3">
+                    {% for item in detalles %}
+                    <li class="list-group-item d-flex justify-content-between align-items-center px-0 py-2">
+                        <div>
+                            <span class="fw-semibold text-dark">{{ item.producto.nombre }}</span>
+                            <small class="text-muted d-block">Cantidad: {{ item.cantidad }}</small>
                         </div>
-                        <div class="row g-2">
-                            <div class="col-6"><input type="text" placeholder="MM/AA" maxlength="5" class="form-control rounded-3"></div>
-                            <div class="col-6"><input type="password" placeholder="CVV" maxlength="3" class="form-control rounded-3"></div>
-                        </div>
+                        <span class="fw-bold text-dark">${{ item.subtotal }}</span>
+                    </li>
+                    {% endfor %}
+                </ul>
+                <div class="border-top pt-3">
+                    <div class="d-flex justify-content-between fs-5 fw-bold text-dark">
+                        <span>Total a Pagar:</span>
+                        <span class="text-primary">${{ subtotal }}</span>
                     </div>
-
-                    <!-- Opción 3: Pago Mixto (Monedero + Tarjeta) -->
-                    {% if monedero.saldo_actual > 0 and monedero.saldo_actual < subtotal %}
-                    <div class="form-check card-select p-3 border rounded-3">
-                        <input class="form-check-input ms-1" type="radio" name="metodo_pago" id="pago_mixto" value="mixto" onclick="togglePagoFields()">
-                        <label class="form-check-label ms-2 w-100" for="pago_mixto">
-                            <div class="d-flex justify-content-between align-items-center">
-                                <div>
-                                    <strong class="d-block">Pago Combinado</strong>
-                                    <small class="text-muted">Usar ${{ monedero.saldo_actual }} de Monedero y pagar resto con Tarjeta</small>
-                                </div>
-                                <i class="bi bi-pie-chart text-warning fs-3"></i>
-                            </div>
-                        </label>
-                    </div>
-
-                    <div id="seccion_tarjeta_mixto" class="p-3 bg-light rounded-3 d-none mt-2">
-                        <h6 class="fw-bold small text-muted mb-2">TARJETA PARA SALDO RESTANTE</h6>
-                        <div class="mb-2">
-                            <input type="text" name="num_tarjeta_mixto" maxlength="16" class="form-control rounded-3" placeholder="Número de tarjeta (16 dígitos)">
-                        </div>
-                    </div>
-                    {% endif %}
-                </div>
-            </div>
-
-            <!-- Resumen Financiero -->
-            <div class="col-lg-5">
-                <div class="card border-0 shadow-sm rounded-4 p-4">
-                    <h5 class="fw-bold text-dark mb-4">Resumen de Cobro</h5>
-                    
-                    <div class="d-flex justify-content-between mb-2">
-                        <span class="text-muted">Total a Pagar:</span>
-                        <span class="fs-4 fw-bold text-primary">${{ subtotal }}</span>
-                    </div>
-
-                    <hr>
-
-                    <button type="submit" class="btn btn-success btn-lg rounded-pill w-100 fw-semibold shadow-sm mt-3">
-                        <i class="bi bi-lock-fill me-2"></i> Procesar Pago Seguro
-                    </button>
                 </div>
             </div>
         </div>
-    </form>
+
+        <!-- Formulario de Selección de Pago -->
+        <div class="col-lg-7 order-lg-1">
+            <form method="post" action="{% url 'procesar_compra' %}">
+                {% csrf_token %}
+                <div class="card border-0 shadow-sm rounded-4 p-4 mb-4 bg-white">
+                    <h5 class="fw-bold text-dark mb-3">Selecciona tu Método de Pago</h5>
+
+                    <!-- Monedero -->
+                    <div class="form-check p-3 border rounded-3 mb-3 bg-light">
+                        <input class="form-check-input ms-1" type="radio" name="metodo_pago" id="pago_monedero" value="monedero" checked onchange="toggleFormMetodo()">
+                        <label class="form-check-label ms-2 fw-semibold text-dark" for="pago_monedero">
+                            <i class="bi bi-wallet2 me-1 text-success"></i> Monedero Virtual
+                        </label>
+                        <small class="d-block ms-4 text-muted">Saldo disponible: <strong>${{ monedero.saldo_actual }}</strong></small>
+                    </div>
+
+                    <!-- Tarjeta -->
+                    <div class="form-check p-3 border rounded-3 mb-3">
+                        <input class="form-check-input ms-1" type="radio" name="metodo_pago" id="pago_tarjeta" value="tarjeta" onchange="toggleFormMetodo()">
+                        <label class="form-check-label ms-2 fw-semibold text-dark" for="pago_tarjeta">
+                            <i class="bi bi-card-heading me-1 text-primary"></i> Tarjeta de Crédito / Débito (Simulado)
+                        </label>
+                        
+                        <div id="campo_tarjeta" class="mt-3 ms-4 d-none">
+                            <label class="form-label small text-muted">Número de Tarjeta (16 dígitos)</label>
+                            <input type="text" name="num_tarjeta" class="form-control" placeholder="1234 5678 9012 3456" maxlength="16">
+                        </div>
+                    </div>
+
+                    <!-- PayPal Simulado -->
+                    <div class="form-check p-3 border rounded-3 mb-3">
+                        <input class="form-check-input ms-1" type="radio" name="metodo_pago" id="pago_paypal" value="paypal" onchange="toggleFormMetodo()">
+                        <label class="form-check-label ms-2 fw-semibold text-dark" for="pago_paypal">
+                            <i class="bi bi-paypal me-1 text-info"></i> PayPal (Simulado)
+                        </label>
+                        
+                        <div id="campo_paypal" class="mt-3 ms-4 d-none">
+                            <label class="form-label small text-muted">Correo electrónico de tu cuenta PayPal</label>
+                            <input type="email" name="email_paypal" class="form-control" placeholder="cliente@ejemplo.com" value="{{ user.email }}">
+                        </div>
+                    </div>
+
+                    <!-- Pago Mixto -->
+                    <div class="form-check p-3 border rounded-3 mb-3">
+                        <input class="form-check-input ms-1" type="radio" name="metodo_pago" id="pago_mixto" value="mixto" onchange="toggleFormMetodo()">
+                        <label class="form-check-label ms-2 fw-semibold text-dark" for="pago_mixto">
+                            <i class="bi bi-pie-chart-fill me-1 text-warning"></i> Pago Combinado (Monedero + Tarjeta)
+                        </label>
+                        
+                        <div id="campo_mixto" class="mt-3 ms-4 d-none">
+                            <p class="small text-muted mb-2">Se usará todo el saldo de tu monedero (<strong>${{ monedero.saldo_actual }}</strong>) y el restante se cobrarrá a la tarjeta.</p>
+                            <label class="form-label small text-muted">Número de Tarjeta para la diferencia</label>
+                            <input type="text" name="num_tarjeta_mixto" class="form-control" placeholder="1234 5678 9012 3456" maxlength="16">
+                        </div>
+                    </div>
+
+                    <button type="submit" class="btn btn-primary btn-lg rounded-pill w-100 fw-bold mt-3">
+                        <i class="bi bi-lock-fill me-1"></i> Confirmar y Procesar Pago
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
 </div>
 
 <script>
-function togglePagoFields() {
+function toggleFormMetodo() {
     const pagoTarjeta = document.getElementById('pago_tarjeta').checked;
-    const pagoMixto = document.getElementById('pago_mixto') ? document.getElementById('pago_mixto').checked : false;
+    const pagoPaypal = document.getElementById('pago_paypal').checked;
+    const pagoMixto = document.getElementById('pago_mixto').checked;
 
-    document.getElementById('seccion_tarjeta').classList.toggle('d-none', !pagoTarjeta);
-    
-    const seccionMixto = document.getElementById('seccion_tarjeta_mixto');
-    if (seccionMixto) {
-        seccionMixto.classList.toggle('d-none', !pagoMixto);
-    }
+    document.getElementById('campo_tarjeta').classList.toggle('d-none', !pagoTarjeta);
+    document.getElementById('campo_paypal').classList.toggle('d-none', !pagoPaypal);
+    document.getElementById('campo_mixto').classList.toggle('d-none', !pagoMixto);
 }
 </script>
 {% endblock %}
