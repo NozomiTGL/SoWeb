@@ -1,0 +1,96 @@
+{% extends 'crm/base_cliente.html' %}
+
+{% block content %}
+<div class="py-4">
+    <div class="mb-4">
+        <h2 class="fw-bold text-dark mb-1"><i class="bi bi-person-circle me-2 text-primary"></i>Mi Perfil</h2>
+        <p class="text-muted mb-0">Gestiona tu información personal, dirección de facturación y seguridad.</p>
+    </div>
+
+    {% if messages %}
+        {% for message in messages %}
+            <div class="alert alert-{{ message.tags }} alert-dismissible fade show rounded-3 shadow-sm mb-4" role="alert">
+                {{ message }}
+                <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+            </div>
+        {% endfor %}
+    {% endif %}
+
+    <div class="row g-4">
+        <!-- Columna: Datos y Dirección -->
+        <div class="col-lg-7">
+            <div class="card border-0 shadow-sm rounded-4 p-4 bg-white mb-4">
+                <h5 class="fw-bold text-dark mb-4"><i class="bi bi-card-text me-2 text-primary"></i>Datos Personales y Facturación</h5>
+                
+                <form method="post" action="{% url 'mi_perfil' %}">
+                    {% csrf_token %}
+                    <input type="hidden" name="form_type" value="datos_personales">
+                    
+                    <div class="row g-3 mb-3">
+                        <div class="col-md-6">
+                            <label class="form-label small fw-bold text-dark">Nombre</label>
+                            <input type="text" name="first_name" class="form-control rounded-3" value="{{ user.first_name }}" required>
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label small fw-bold text-dark">Apellidos</label>
+                            <input type="text" name="last_name" class="form-control rounded-3" value="{{ user.last_name }}">
+                        </div>
+                    </div>
+
+                    <div class="mb-3">
+                        <label class="form-label small fw-bold text-dark">Correo Electrónico (Solo lectura)</label>
+                        <input type="email" class="form-control rounded-3 bg-light text-muted" value="{{ user.email }}" readonly>
+                        <small class="text-muted">El correo se utiliza para iniciar sesión y enviarte notificaciones.</small>
+                    </div>
+
+                    {% if cliente %}
+                    <div class="mb-4 pt-3 border-top">
+                        <label class="form-label small fw-bold text-dark"><i class="bi bi-building me-1 text-secondary"></i> Empresa</label>
+                        <input type="text" class="form-control rounded-3 mb-3 bg-light" value="{{ cliente.empresa|default:'Sin registrar' }}" readonly>
+
+                        <label class="form-label small fw-bold text-dark"><i class="bi bi-geo-alt-fill me-1 text-danger"></i> Dirección de Facturación</label>
+                        <textarea name="direccion_facturacion" rows="3" class="form-control rounded-3" placeholder="Ingresa tu dirección fiscal completa (Calle, Número, C.P., Ciudad, Estado)...">{{ cliente.direccion_facturacion|default:'' }}</textarea>
+                        <small class="text-muted">Esta dirección aparecerá pre-cargada al momento de realizar tu pago.</small>
+                    </div>
+                    {% endif %}
+
+                    <button type="submit" class="btn btn-primary rounded-pill px-4 fw-bold">
+                        <i class="bi bi-save me-1"></i> Guardar Cambios
+                    </button>
+                </form>
+            </div>
+        </div>
+
+        <!-- Columna: Seguridad y Contraseña -->
+        <div class="col-lg-5">
+            <div class="card border-0 shadow-sm rounded-4 p-4 bg-white">
+                <h5 class="fw-bold text-dark mb-4"><i class="bi bi-shield-lock me-2 text-warning"></i>Seguridad de la Cuenta</h5>
+                
+                <form method="post" action="{% url 'mi_perfil' %}">
+                    {% csrf_token %}
+                    <input type="hidden" name="form_type" value="cambiar_password">
+                    
+                    <div class="mb-3">
+                        <label class="form-label small fw-bold text-dark">Contraseña Actual</label>
+                        <input type="password" name="password_actual" class="form-control rounded-3" required>
+                    </div>
+                    
+                    <div class="mb-3 border-top pt-3">
+                        <label class="form-label small fw-bold text-dark">Nueva Contraseña</label>
+                        <input type="password" name="password_nueva" class="form-control rounded-3" required minlength="8">
+                    </div>
+                    
+                    <div class="mb-4">
+                        <label class="form-label small fw-bold text-dark">Confirmar Nueva Contraseña</label>
+                        <input type="password" name="password_confirmacion" class="form-control rounded-3" required minlength="8">
+                    </div>
+
+                    <button type="submit" class="btn btn-warning rounded-pill w-100 fw-bold text-dark">
+                        <i class="bi bi-key me-1"></i> Actualizar Contraseña
+                    </button>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

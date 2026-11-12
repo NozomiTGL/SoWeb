@@ -18,10 +18,13 @@ from django.utils import timezone
 from django.contrib.auth.models import User
 from django.contrib.auth.forms import UserCreationForm
 from .models import Cliente, Interaccion
-from .models import Cliente, Interaccion, PerfilTrabajador
 from django.contrib import messages
 from .models import TicketSoporte
-
+from .models import CodigoRecuperacion
+import random
+from django.core.mail import send_mail
+from django.contrib.auth import update_session_auth_hash, login
+from .models import Cliente, Interaccion, PerfilTrabajador, TicketSoporte, CodigoRecuperacion
 
 def es_admin(user):
     """
@@ -558,17 +561,18 @@ def editar_usuario(request, pk):
 # ---------------------------------------------------------
 def registro_cliente_publico(request):
     """
-    Permite que prospectos o clientes se auto-registren desde la landing page o enlace público.
-    Crea el cliente en estado 'activo' y etapa 'prospecto', dejando el vendedor como 'Sin asignar' (None).
+    Permite que nuevos clientes se auto-registren desde el enlace público,
+    crea su cuenta de acceso automáticamente, inicia su sesión y les muestra
+    su contraseña por defecto.
     """
     if request.method == 'POST':
-        nombre = request.POST.get('nombre')
-        correo = request.POST.get('correo')
-        telefono = request.POST.get('telefono')
-        empresa = request.POST.get('empresa')
+        nombre = request.POST.get('nombre', '').strip()
+        correo = request.POST.get('correo', '').strip()
+        telefono = request.POST.get('telefono', '').strip()
+        empresa = request.POST.get('empresa', '').strip()
 
-        # Validación básica para evitar correos duplicados
-        if Cliente.objects.filter(correo=correo).exists():
+        # Validar que el correo no exista ni en Clientes ni en Usuarios
+        if Cliente.objects.filter(correo=correo).exists() or User.objects.filter(username=correo).exists():
             messages.error(request, 'Este correo electrónico ya se encuentra registrado en nuestro sistema.')
             return render(request, 'crm/registro_publico.html', {
                 'nombre': nombre,
@@ -576,9 +580,21 @@ def registro_cliente_publico(request):
                 'empresa': empresa
             })
 
-        # Creación del registro sin vendedor asignado (vendedor=None)
+        password_default = 'SowebCliente2026'
+
+        # 1. Crear el usuario de acceso en Django
+        usuario_cliente = User.objects.create_user(
+            username=correo,
+            email=correo,
+            password=password_default,
+            first_name=nombre[:30],
+            is_staff=False
+        )
+
+        # 2. Crear la ficha de Cliente vinculada a esa cuenta
         Cliente.objects.create(
             vendedor=None,
+            usuario_login=usuario_cliente,
             nombre=nombre,
             correo=correo,
             telefono=telefono,
@@ -586,9 +602,17 @@ def registro_cliente_publico(request):
             estado='activo',
             etapa_crm='prospecto'
         )
-        
-        messages.success(request, '¡Gracias por registrarte! Un asesor comercial se pondrá en contacto contigo pronto.')
-        return redirect('registro_cliente_publico')
+
+        # 3. Iniciar sesión automáticamente para que ya esté dentro del sistema
+        login(request, usuario_cliente)
+
+        messages.success(
+            request,
+            f'¡Bienvenido a SoWeb, {nombre}! Ya estás dentro del sistema. '
+            f'Tu usuario es "{correo}" y tu contraseña por defecto es "{password_default}" '
+            f'(puedes cambiarla en cualquier momento desde Mi Perfil).'
+        )
+        return redirect('catalogo_tienda')
 
     return render(request, 'crm/registro_publico.html')
 
@@ -697,3 +721,127 @@ def reabrir_ticket(request, ticket_id):
         messages.success(request, f"Respuesta enviada para el Ticket T-{ticket.id:03d}. Se ha notificado al equipo de soporte.")
 
     return redirect('mis_tickets')
+
+# ---------------------------------------------------------
+# 10. MI PERFIL Y FACTURACIÓN
+# ---------------------------------------------------------
+@login_required
+def mi_perfil(request):
+    cliente = getattr(request.user, 'perfil_cliente', None)
+
+    if request.method == 'POST':
+        form_type = request.POST.get('form_type')
+
+        if form_type == 'datos_personales':
+            request.user.first_name = request.POST.get('first_name', '')
+            request.user.last_name = request.POST.get('last_name', '')
+            request.user.save()
+
+            if cliente:
+                cliente.nombre = f"{request.user.first_name} {request.user.last_name}".strip()
+                cliente.direccion_facturacion = request.POST.get('direccion_facturacion', '')
+                cliente.save()
+                
+            messages.success(request, "Tus datos personales y dirección han sido actualizados.")
+            return redirect('mi_perfil')
+
+        elif form_type == 'cambiar_password':
+            actual = request.POST.get('password_actual')
+            nueva = request.POST.get('password_nueva')
+            confirmacion = request.POST.get('password_confirmacion')
+
+            if not request.user.check_password(actual):
+                messages.error(request, "La contraseña actual es incorrecta.")
+            elif nueva != confirmacion:
+                messages.error(request, "Las contraseñas nuevas no coinciden.")
+            elif len(nueva) < 8:
+                messages.error(request, "La contraseña debe tener al menos 8 caracteres.")
+            else:
+                request.user.set_password(nueva)
+                request.user.save()
+                update_session_auth_hash(request, request.user)
+                messages.success(request, "Tu contraseña ha sido actualizada con éxito.")
+            
+            return redirect('mi_perfil')
+
+    return render(request, 'crm/mi_perfil.html', {'cliente': cliente})
+
+
+# ---------------------------------------------------------
+# 11. RECUPERACIÓN DE CONTRASEÑA (OTP por Correo)
+# ---------------------------------------------------------
+def solicitar_recuperacion(request):
+    if request.method == 'POST':
+        correo = request.POST.get('correo', '').strip()
+        usuario = User.objects.filter(email=correo).first()
+        
+        if usuario:
+            codigo_otp = str(random.randint(100000, 999999))
+            CodigoRecuperacion.objects.update_or_create(
+                usuario=usuario, defaults={'codigo': codigo_otp, 'creado': timezone.now()}
+            )
+            
+            asunto = 'Código de Recuperación de Contraseña - SoWeb'
+            cuerpo = f'Hola {usuario.first_name or usuario.username},\n\nSe ha solicitado un restablecimiento de contraseña.\n\nTu código de seguridad es: {codigo_otp}\n\nExpirará en 15 minutos.'
+            send_mail(asunto, cuerpo, 'soporte@soweb.com', [correo], fail_silently=False)
+            
+            request.session['email_recuperacion'] = correo
+            return redirect('verificar_codigo')
+        else:
+            messages.error(request, "Si el correo existe en nuestro sistema, se ha enviado un código.")
+            return redirect('solicitar_recuperacion')
+            
+    return render(request, 'crm/recuperacion_paso1.html')
+
+def verificar_codigo(request):
+    correo = request.session.get('email_recuperacion')
+    if not correo: return redirect('solicitar_recuperacion')
+
+    if request.method == 'POST':
+        codigo_ingresado = request.POST.get('codigo', '').strip()
+        usuario = User.objects.filter(email=correo).first()
+        
+        if hasattr(usuario, 'codigo_recuperacion'):
+            registro_codigo = usuario.codigo_recuperacion
+            if registro_codigo.codigo == codigo_ingresado:
+                if registro_codigo.es_valido():
+                    request.session['codigo_verificado'] = True
+                    return redirect('restablecer_password')
+                else:
+                    messages.error(request, "El código expiró. Solicita uno nuevo.")
+                    return redirect('solicitar_recuperacion')
+            else:
+                messages.error(request, "Código incorrecto.")
+        else:
+            messages.error(request, "Error. Solicita el código nuevamente.")
+            return redirect('solicitar_recuperacion')
+            
+    return render(request, 'crm/recuperacion_paso2.html', {'correo': correo})
+
+def restablecer_password(request):
+    correo = request.session.get('email_recuperacion')
+    verificado = request.session.get('codigo_verificado')
+    
+    if not correo or not verificado: return redirect('solicitar_recuperacion')
+
+    if request.method == 'POST':
+        nueva = request.POST.get('nueva_password')
+        confirmacion = request.POST.get('confirmacion')
+
+        if nueva != confirmacion:
+            messages.error(request, "Las contraseñas no coinciden.")
+        elif len(nueva) < 8:
+            messages.error(request, "La contraseña debe tener al menos 8 caracteres.")
+        else:
+            usuario = User.objects.get(email=correo)
+            usuario.set_password(nueva)
+            usuario.save()
+            
+            del request.session['email_recuperacion']
+            del request.session['codigo_verificado']
+            usuario.codigo_recuperacion.delete()
+            
+            messages.success(request, "¡Contraseña restablecida! Ya puedes iniciar sesión.")
+            return redirect('login')
+
+    return render(request, 'crm/recuperacion_paso3.html')

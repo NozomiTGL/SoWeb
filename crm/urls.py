@@ -61,4 +61,11 @@ urlpatterns = [
     path('soporte/tickets/', views.panel_soporte, name='panel_soporte'),
     path('soporte/tickets/<int:ticket_id>/responder/', views.responder_ticket, name='responder_ticket'),
     path('tickets/<int:ticket_id>/reabrir/', views.reabrir_ticket, name='reabrir_ticket'),
+    # Perfil de Usuario
+    path('mi-perfil/', views.mi_perfil, name='mi_perfil'),
+
+    # Recuperación de Contraseña (OTP)
+    path('recuperar-password/', views.solicitar_recuperacion, name='solicitar_recuperacion'),
+    path('recuperar-password/verificar/', views.verificar_codigo, name='verificar_codigo'),
+    path('recuperar-password/nueva/', views.restablecer_password, name='restablecer_password'),
 ]

@@ -1,0 +1,30 @@
+{% extends 'crm/base_cliente.html' %}
+{% block content %}
+<div class="row justify-content-center py-5">
+    <div class="col-md-5">
+        <div class="card border-0 shadow-lg rounded-4 p-4 text-center">
+            <i class="bi bi-shield-lock text-primary mb-3" style="font-size: 3rem;"></i>
+            <h4 class="fw-bold mb-2">Recuperar Contraseña</h4>
+            <p class="text-muted small mb-4">Ingresa tu correo electrónico y te enviaremos un código de seguridad de 6 dígitos para restablecer tu acceso.</p>
+            
+            {% if messages %}
+                {% for message in messages %}
+                    <div class="alert alert-{{ message.tags }} alert-dismissible small p-2">{{ message }}</div>
+                {% endfor %}
+            {% endif %}
+
+            <form method="post">
+                {% csrf_token %}
+                <div class="mb-3 text-start">
+                    <label class="form-label small fw-bold">Correo Electrónico</label>
+                    <input type="email" name="correo" class="form-control rounded-3" placeholder="ejemplo@correo.com" required>
+                </div>
+                <button type="submit" class="btn btn-primary w-100 rounded-pill fw-bold">
+                    <i class="bi bi-envelope-paper me-1"></i> Enviar Código
+                </button>
+            </form>
+            <a href="{% url 'login' %}" class="d-block mt-4 small text-decoration-none">Volver a iniciar sesión</a>
+        </div>
+    </div>
+</div>
+{% endblock %}

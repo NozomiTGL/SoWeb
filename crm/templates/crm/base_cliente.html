@@ -23,6 +23,7 @@
         </button>
 
         <div class="collapse navbar-collapse" id="navbarNav">
+          {% if user.is_authenticated %}
           <!-- Navegación Principal -->
           <ul class="navbar-nav me-auto ms-lg-4">
             <li class="nav-item">
@@ -45,6 +46,11 @@
                 <i class="bi bi-headset me-1"></i> Soporte
               </a>
             </li>
+            <li class="nav-item">
+              <a class="nav-link px-3" href="{% url 'mi_perfil' %}">
+                <i class="bi bi-person-gear me-1"></i> Mi Perfil
+              </a>
+            </li>
           </ul>
 
           <div class="d-flex align-items-center gap-3 mt-3 mt-lg-0">
@@ -64,11 +70,13 @@
               </span>
             </a>
 
-            <!-- Saludo y Perfil -->
-            <div class="text-end d-none d-lg-block border-start border-secondary ps-3 ms-2">
+            <!-- Saludo y Acceso a Perfil -->
+            <a href="{% url 'mi_perfil' %}" class="text-end d-none d-lg-block border-start border-secondary ps-3 ms-2 text-decoration-none" title="Configurar Mi Perfil">
               <small class="text-muted d-block leading-none">Bienvenido,</small>
-              <span class="text-white fw-semibold small">{{ user.first_name|default:user.username }}</span>
-            </div>
+              <span class="text-white fw-semibold small">
+                <i class="bi bi-person-circle me-1 text-primary"></i>{{ user.first_name|default:user.username }}
+              </span>
+            </a>
             
             <!-- Cerrar Sesión -->
             <form method="post" action="{% url 'logout' %}" class="ms-2">
@@ -78,11 +86,35 @@
               </button>
             </form>
           </div>
+          {% else %}
+          <!-- Enlace de regreso si está en recuperación de contraseña -->
+          <div class="ms-auto">
+            <a href="{% url 'login' %}" class="btn btn-outline-light btn-sm rounded-pill px-3">
+              <i class="bi bi-box-arrow-in-right me-1"></i> Iniciar Sesión
+            </a>
+          </div>
+          {% endif %}
         </div>
       </div>
     </nav>
 
     <main class="container flex-grow-1">
+      {% if messages %}
+        {% for message in messages %}
+          <div class="alert alert-{% if message.tags == 'error' %}danger{% else %}{{ message.tags }}{% endif %} alert-dismissible fade show border-0 shadow-sm rounded-3 mb-4" role="alert">
+            {% if message.tags == 'success' %}
+              <i class="bi bi-check-circle-fill me-2"></i>
+            {% elif message.tags == 'danger' or message.tags == 'error' %}
+              <i class="bi bi-exclamation-triangle-fill me-2"></i>
+            {% else %}
+              <i class="bi bi-info-circle-fill me-2"></i>
+            {% endif %}
+            {{ message }}
+            <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+          </div>
+        {% endfor %}
+      {% endif %}
+
       {% block content %}{% endblock %}
     </main>
 

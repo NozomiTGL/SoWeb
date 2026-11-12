@@ -1,3 +1,5 @@
+from time import timezone
+from datetime import timedelta
 from django.db import models
 from django.contrib.auth.models import User
 
@@ -62,6 +64,9 @@ class Cliente(models.Model):
     correo = models.EmailField(unique=True, verbose_name="Correo electrónico")
     telefono = models.CharField(max_length=20, blank=True, null=True, verbose_name="Teléfono")
     empresa = models.CharField(max_length=150, blank=True, null=True, verbose_name="Empresa / Negocio")
+    
+    # NUEVO CAMPO: Dirección de Facturación
+    direccion_facturacion = models.TextField(blank=True, null=True, verbose_name="Dirección de Facturación")
     
     fecha_registro = models.DateTimeField(auto_now_add=True, verbose_name="Fecha de registro")
     estado = models.CharField(max_length=10, choices=ESTADO_CHOICES, default='activo', verbose_name="Estado")
@@ -138,3 +143,18 @@ class TicketSoporte(models.Model):
 
     def __str__(self):
         return f"T-{self.id:03d} | {self.asunto} - {self.usuario.username}"
+
+class CodigoRecuperacion(models.Model):
+    """
+    Almacena códigos temporales OTP para la recuperación de contraseña.
+    """
+    usuario = models.OneToOneField(User, on_delete=models.CASCADE, related_name='codigo_recuperacion')
+    codigo = models.CharField(max_length=6)
+    creado = models.DateTimeField(auto_now_add=True)
+
+    def es_valido(self):
+        tiempo_limite = self.creado + timedelta(minutes=15)
+        return timezone.now() <= tiempo_limite
+
+    def __str__(self):
+        return f"Código para {self.usuario.email}"
