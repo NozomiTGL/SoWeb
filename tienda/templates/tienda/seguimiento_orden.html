@@ -1,0 +1,276 @@
+{% extends 'crm/base_cliente.html' %}
+
+{% block content %}
+<style>
+    .tracker-step {
+        position: relative;
+        z-index: 2;
+        text-align: center;
+        flex: 1;
+    }
+    .tracker-icon {
+        width: 54px;
+        height: 54px;
+        border-radius: 50%;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 1.35rem;
+        background-color: #e9ecef;
+        color: #6c757d;
+        border: 4px solid #fff;
+        box-shadow: 0 4px 10px rgba(0,0,0,0.08);
+        transition: all 0.4s ease;
+    }
+    .tracker-step.active .tracker-icon {
+        background-color: #0d6efd;
+        color: #fff;
+        transform: scale(1.1);
+        box-shadow: 0 0 0 6px rgba(13, 110, 253, 0.2);
+    }
+    .tracker-step.completed .tracker-icon {
+        background-color: #198754;
+        color: #fff;
+    }
+    .tracker-line-container {
+        position: absolute;
+        top: 27px;
+        left: 12.5%;
+        right: 12.5%;
+        height: 6px;
+        background-color: #e9ecef;
+        z-index: 1;
+        border-radius: 4px;
+        overflow: hidden;
+    }
+    .tracker-line-fill {
+        height: 100%;
+        width: 0%;
+        background: linear-gradient(90deg, #0d6efd, #198754);
+        transition: width 0.25s linear;
+    }
+    @keyframes pulseGlow {
+        0% { opacity: 1; }
+        50% { opacity: 0.55; }
+        100% { opacity: 1; }
+    }
+    .pulsing-text {
+        animation: pulseGlow 1.5s infinite;
+    }
+</style>
+
+<div class="py-4">
+    <!-- Encabezado y navegación -->
+    <div class="d-flex justify-content-between align-items-center mb-4 flex-wrap gap-2">
+        <div>
+            <a href="{% url 'mis_pedidos' %}" class="text-decoration-none text-muted small fw-semibold">
+                <i class="bi bi-arrow-left me-1"></i> Volver a Mis Pedidos
+            </a>
+            <h2 class="fw-bold text-dark mt-1 mb-0">
+                <i class="bi bi-radar me-2 text-primary"></i>Seguimiento de Servicio Digital • Orden #{{ orden.id }}
+            </h2>
+        </div>
+        <div class="d-flex gap-2">
+            <a href="{% url 'detalle_orden' orden.id %}" class="btn btn-outline-secondary btn-sm rounded-pill px-3">
+                <i class="bi bi-file-earmark-text me-1"></i> Ver Comprobante
+            </a>
+            <a href="{% url 'mis_tickets' %}" class="btn btn-outline-primary btn-sm rounded-pill px-3">
+                <i class="bi bi-headset me-1"></i> Soporte Técnico
+            </a>
+        </div>
+    </div>
+
+    <!-- Tarjeta Principal de Seguimiento tipo Amazon -->
+    <div class="card border-0 shadow-sm rounded-4 p-4 p-md-5 bg-white mb-4">
+        
+        <!-- Banner de Estado Dinámico -->
+        <div class="d-flex justify-content-between align-items-center pb-4 mb-4 border-bottom flex-wrap gap-3">
+            <div>
+                <span class="text-uppercase small fw-bold text-muted d-block">Estado Actual de la Orden ({{ orden.folio }})</span>
+                <h3 id="titulo-estado" class="fw-bold text-primary mb-1 pulsing-text">
+                    Aprovisionando tu entorno digital...
+                </h3>
+                <p id="subtitulo-estado" class="text-muted mb-0">
+                    Estamos configurando tus servicios en la nube. Este proceso toma aproximadamente 20 segundos.
+                </p>
+            </div>
+            <div class="text-md-end">
+                <span id="badge-estado" class="badge bg-primary-subtle text-primary border border-primary rounded-pill px-4 py-2 fs-6">
+                    <span class="spinner-border spinner-border-sm me-2" role="status"></span>En progreso (<span id="contador-segundos">20</span>s)
+                </span>
+            </div>
+        </div>
+
+        <!-- Barra de Pasos Visual (Stepper) -->
+        <div class="position-relative my-5 px-2">
+            <div class="tracker-line-container">
+                <div id="tracker-progress-bar" class="tracker-line-fill"></div>
+            </div>
+
+            <div class="d-flex justify-content-between position-relative">
+                <!-- Paso 1 -->
+                <div id="step-1" class="tracker-step completed">
+                    <div class="tracker-icon"><i class="bi bi-credit-card-2-front-fill"></i></div>
+                    <h6 class="fw-bold text-dark mt-3 mb-1 small">1. Pago Confirmado</h6>
+                    <span class="text-muted d-none d-sm-block" style="font-size: 0.78rem;">Transacción aprobada</span>
+                </div>
+
+                <!-- Paso 2 -->
+                <div id="step-2" class="tracker-step active">
+                    <div class="tracker-icon"><i class="bi bi-hdd-network-fill"></i></div>
+                    <h6 class="fw-bold text-dark mt-3 mb-1 small">2. Aprovisionando</h6>
+                    <span class="text-muted d-none d-sm-block" style="font-size: 0.78rem;">Asignando recursos</span>
+                </div>
+
+                <!-- Paso 3 -->
+                <div id="step-3" class="tracker-step">
+                    <div class="tracker-icon"><i class="bi bi-key-fill"></i></div>
+                    <h6 class="fw-bold text-dark mt-3 mb-1 small">3. Activando Licencias</h6>
+                    <span class="text-muted d-none d-sm-block" style="font-size: 0.78rem;">Generando credenciales</span>
+                </div>
+
+                <!-- Paso 4 -->
+                <div id="step-4" class="tracker-step">
+                    <div class="tracker-icon"><i class="bi bi-check-lg"></i></div>
+                    <h6 class="fw-bold text-dark mt-3 mb-1 small">4. Servicio Activo</h6>
+                    <span class="text-muted d-none d-sm-block" style="font-size: 0.78rem;">Listo para operar</span>
+                </div>
+            </div>
+        </div>
+
+        <!-- Bitácora en Vivo del Despliegue Digital -->
+        <div class="row g-4 mt-2 pt-3 border-top">
+            <div class="col-lg-7">
+                <h6 class="fw-bold text-dark mb-3"><i class="bi bi-terminal me-2 text-primary"></i>Bitácora de Activación del Servicio</h6>
+                <div class="bg-dark text-light rounded-3 p-3 font-monospace small" style="min-height: 155px;">
+                    <div id="log-1" class="text-success mb-1">[OK] Pago verificado por ${{ orden.total }} MXN. Orden #{{ orden.id }} en cola.</div>
+                    <div id="log-2" class="text-info mb-1 d-none">[INFO] Reservando instancias y parámetros técnicos del cliente...</div>
+                    <div id="log-3" class="text-warning mb-1 d-none">[PROC] Vinculando licencias de software y permisos de acceso...</div>
+                    <div id="log-4" class="text-success fw-bold mt-2 d-none">[COMPLETADO] ¡Despliegue finalizado! Todos los servicios están activos.</div>
+                </div>
+            </div>
+
+            <div class="col-lg-5">
+                <h6 class="fw-bold text-dark mb-3"><i class="bi bi-info-circle me-2 text-primary"></i>Resumen de la Orden</h6>
+                <div class="bg-light rounded-3 p-3 border">
+                    <div class="d-flex justify-content-between mb-2 small">
+                        <span class="text-muted">Folio Interno:</span>
+                        <span class="fw-bold text-dark">{{ orden.folio }}</span>
+                    </div>
+                    <div class="d-flex justify-content-between mb-2 small">
+                        <span class="text-muted">Fecha de Compra:</span>
+                        <span class="fw-semibold text-dark">{{ orden.fecha|date:"d/m/Y h:i A" }}</span>
+                    </div>
+                    <div class="d-flex justify-content-between mb-2 small">
+                        <span class="text-muted">Cliente:</span>
+                        <span class="fw-semibold text-dark">{{ orden.cliente.nombre }}</span>
+                    </div>
+                    <div class="d-flex justify-content-between pt-2 border-top">
+                        <span class="fw-bold text-dark">Total Pagado:</span>
+                        <span class="fw-bold text-success">${{ orden.total }}</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+    </div>
+</div>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const DURACION_TOTAL = 20; // 20 segundos
+    let elapsed = parseFloat("{{ segundos_transcurridos|stringformat:'f' }}") || 0;
+    const estadoInicial = "{{ orden.estado }}";
+    const urlEstadoJson = "{% url 'estado_orden_json' orden.id %}";
+
+    const progressBar = document.getElementById('tracker-progress-bar');
+    const step1 = document.getElementById('step-1');
+    const step2 = document.getElementById('step-2');
+    const step3 = document.getElementById('step-3');
+    const step4 = document.getElementById('step-4');
+
+    const log2 = document.getElementById('log-2');
+    const log3 = document.getElementById('log-3');
+    const log4 = document.getElementById('log-4');
+
+    const tituloEstado = document.getElementById('titulo-estado');
+    const subtituloEstado = document.getElementById('subtitulo-estado');
+    const badgeEstado = document.getElementById('badge-estado');
+    const contadorSegundos = document.getElementById('contador-segundos');
+
+    let sincronizadoConServidor = (estadoInicial === 'Completada');
+
+    function marcarComoCompletado() {
+        progressBar.style.width = '100%';
+        [step1, step2, step3, step4].forEach(s => {
+            s.classList.remove('active');
+            s.classList.add('completed');
+        });
+        log2.classList.remove('d-none');
+        log3.classList.remove('d-none');
+        log4.classList.remove('d-none');
+
+        tituloEstado.textContent = "¡Servicio Activo y Disponible!";
+        tituloEstado.classList.remove('text-primary', 'pulsing-text');
+        tituloEstado.classList.add('text-success');
+        subtituloEstado.textContent = "Tu compra ha sido aprovisionada con éxito. Ya puedes hacer uso completo de tus servicios.";
+
+        badgeEstado.className = "badge bg-success-subtle text-success border border-success rounded-pill px-4 py-2 fs-6";
+        badgeEstado.innerHTML = '<i class="bi bi-check-circle-fill me-2"></i>Completada / Activo';
+
+        // Confirmar actualización en la base de datos de Django
+        if (!sincronizadoConServidor) {
+            sincronizadoConServidor = true;
+            fetch(urlEstadoJson).catch(err => console.error(err));
+        }
+    }
+
+    function actualizarProgreso(segundos) {
+        if (segundos >= DURACION_TOTAL || estadoInicial === 'Completada') {
+            marcarComoCompletado();
+            return true;
+        }
+
+        const porcentaje = Math.min(100, (segundos / DURACION_TOTAL) * 100);
+        progressBar.style.width = porcentaje + '%';
+
+        const restantes = Math.max(1, Math.ceil(DURACION_TOTAL - segundos));
+        if (contadorSegundos) contadorSegundos.textContent = restantes;
+
+        // Etapa 1 -> 2 (0s a 6s)
+        if (segundos >= 2) {
+            log2.classList.remove('d-none');
+        }
+
+        // Etapa 2 -> 3 (a partir de los 8s)
+        if (segundos >= 8) {
+            step2.classList.remove('active');
+            step2.classList.add('completed');
+            step3.classList.add('active');
+            log3.classList.remove('d-none');
+            tituloEstado.textContent = "Activando licencias y credenciales...";
+        }
+
+        // Etapa 3 -> 4 (a partir de los 15s)
+        if (segundos >= 15) {
+            step3.classList.remove('active');
+            step3.classList.add('completed');
+            step4.classList.add('active');
+            tituloEstado.textContent = "Finalizando configuración del servicio...";
+        }
+
+        return false;
+    }
+
+    // Pintar estado inicial al cargar la página
+    if (!actualizarProgreso(elapsed)) {
+        const intervalo = setInterval(() => {
+            elapsed += 0.25;
+            if (actualizarProgreso(elapsed)) {
+                clearInterval(intervalo);
+            }
+        }, 250);
+    }
+});
+</script>
+{% endblock %}

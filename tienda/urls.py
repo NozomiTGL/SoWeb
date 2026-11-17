@@ -25,4 +25,10 @@ urlpatterns = [
     path('mis-pedidos/<int:orden_id>/', views.detalle_orden, name='detalle_orden'),
 
     path('monedero/historial/', views.historial_monedero, name='historial_monedero'),
+
+    # Historial y Seguimiento de Pedidos
+    path('mis-pedidos/', views.mis_pedidos, name='mis_pedidos'),
+    path('mis-pedidos/<int:orden_id>/', views.detalle_orden, name='detalle_orden'),
+    path('mis-pedidos/<int:orden_id>/seguimiento/', views.seguimiento_orden, name='seguimiento_orden'),
+    path('mis-pedidos/<int:orden_id>/estado-json/', views.estado_orden_json, name='estado_orden_json'),
 ]

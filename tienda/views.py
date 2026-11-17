@@ -12,6 +12,8 @@ from crm.models import Cliente
 from django.db import transaction
 from .models import Carrito, CarritoDetalle, Monedero, CodigoRecarga
 from .models import Carrito, CarritoDetalle, Monedero, MovimientoMonedero
+from django.utils import timezone
+from django.http import JsonResponse
 
 @login_required
 def catalogo_tienda(request):
@@ -206,13 +208,25 @@ def checkout(request):
     }
     return render(request, 'tienda/checkout.html', context)
 
+def _sincronizar_estado_orden(orden):
+    """
+    Evalúa el tiempo transcurrido desde la creación de la orden.
+    Si han pasado >= 20 segundos y sigue en proceso, la marca como 'Completada' en la BD.
+    """
+    if orden.estado in ['Pendiente', 'Procesando']:
+        ahora = timezone.now()
+        segundos = (ahora - orden.fecha).total_seconds()
+        if segundos >= 20:
+            orden.estado = 'Completada'
+            orden.save(update_fields=['estado'])
+    return orden
 
 @login_required
 @transaction.atomic
 def procesar_compra(request):
     """
-    Procesa la compra admitiendo múltiples medios de pago (Monedero, Tarjeta, PayPal y Mixto)
-    e integra el registro en el historial de movimientos del monedero.
+    Procesa la compra, registra la orden en estado 'Procesando' y redirige
+    al seguimiento en vivo tipo Amazon.
     """
     if request.method != 'POST':
         return redirect('checkout')
@@ -232,7 +246,6 @@ def procesar_compra(request):
     monto_tarjeta_usado = Decimal('0.00')
     monto_paypal_usado = Decimal('0.00')
 
-    # Validaciones según método de pago elegido
     if metodo_pago == 'monedero':
         if monedero.saldo_actual < subtotal:
             messages.error(request, "Saldo insuficiente en tu monedero virtual. Elige otro método de pago o recarga saldo.")
@@ -269,12 +282,10 @@ def procesar_compra(request):
         messages.error(request, "Seleccione un método de pago válido.")
         return redirect('checkout')
 
-    # Descuento del Monedero si se utilizó + Registro en Historial
     if monto_monedero_usado > 0:
         monedero.saldo_actual -= monto_monedero_usado
         monedero.save()
 
-        # Registro en el historial de movimientos
         MovimientoMonedero.objects.create(
             monedero=monedero,
             tipo='Compra',
@@ -282,30 +293,32 @@ def procesar_compra(request):
             descripcion="Consumo por compra en tienda"
         )
 
-    # Descuento de stock en SCM
     for item in detalles:
         item.producto.stock_actual -= item.cantidad
         item.producto.save()
 
-    # Obtener perfil del cliente (CRM)
     cliente_obj = Cliente.objects.filter(usuario_login=request.user).first()
     if not cliente_obj:
         messages.error(request, "No se encontró un perfil de Cliente asociado a tu cuenta.")
         return redirect('checkout')
 
-    # Registrar Orden en ERP
+    # Guardar dirección de facturación si el cliente la confirmó/editó en el checkout
+    direccion_post = request.POST.get('direccion_facturacion')
+    if direccion_post is not None and hasattr(cliente_obj, 'direccion_facturacion'):
+        cliente_obj.direccion_facturacion = direccion_post.strip()
+        cliente_obj.save()
+
+    # Registrar Orden en ERP iniciando en 'Procesando' para el seguimiento de 20s
     orden = OrdenEmpresarial.objects.create(
         cliente=cliente_obj,
         total=subtotal,
-        estado='Procesada' if hasattr(OrdenEmpresarial, 'estado') else 'Pendiente'
+        estado='Procesando'
     )
 
-    # Vaciar los detalles del carrito y restablecer estado
     carrito.detalles.all().delete()
     carrito.estado = 'Activo'
     carrito.save()
 
-    # Formatear métodos usados para el mensaje final
     metodos_usados = []
     if monto_monedero_usado > 0:
         metodos_usados.append(f"Monedero: ${monto_monedero_usado:.2f}")
@@ -318,27 +331,27 @@ def procesar_compra(request):
 
     messages.success(
         request, 
-        f"¡Compra completada con éxito! Orden #{orden.id} generada. ({resumen_pago})"
+        f"¡Pago confirmado! Orden #{orden.id} generada ({resumen_pago}). Estamos aprovisionando tus servicios."
     )
-    return redirect('catalogo_tienda')
+    return redirect('seguimiento_orden', orden_id=orden.id)
 
 
 @login_required
 def mis_pedidos(request):
     """
-    Consulta y muestra el historial de órdenes del cliente autenticado.
+    Consulta y muestra el historial de órdenes del cliente autenticado,
+    sincronizando automáticamente el estado de las órdenes que ya cumplieron los 20s.
     """
     cliente_obj = Cliente.objects.filter(usuario_login=request.user).first()
     
     if cliente_obj:
-        ordenes = OrdenEmpresarial.objects.filter(cliente=cliente_obj).order_by('-id')
+        ordenes = list(OrdenEmpresarial.objects.filter(cliente=cliente_obj).order_by('-id'))
+        for orden in ordenes:
+            _sincronizar_estado_orden(orden)
     else:
         ordenes = []
 
-    context = {
-        'ordenes': ordenes
-    }
-    return render(request, 'tienda/mis_pedidos.html', context)
+    return render(request, 'tienda/mis_pedidos.html', {'ordenes': ordenes})
 
 @login_required
 def detalle_orden(request, orden_id):
@@ -347,11 +360,43 @@ def detalle_orden(request, orden_id):
     """
     cliente_obj = get_object_or_404(Cliente, usuario_login=request.user)
     orden = get_object_or_404(OrdenEmpresarial, id=orden_id, cliente=cliente_obj)
+    _sincronizar_estado_orden(orden)
+
+    return render(request, 'tienda/detalle_orden.html', {'orden': orden})
+
+@login_required
+def seguimiento_orden(request, orden_id):
+    """
+    Vista tipo Amazon para rastrear el aprovisionamiento digital de un servicio.
+    """
+    cliente_obj = get_object_or_404(Cliente, usuario_login=request.user)
+    orden = get_object_or_404(OrdenEmpresarial, id=orden_id, cliente=cliente_obj)
+    _sincronizar_estado_orden(orden)
+
+    segundos_transcurridos = max(0, (timezone.now() - orden.fecha).total_seconds())
+    if orden.estado == 'Completada':
+        segundos_transcurridos = 20
 
     context = {
-        'orden': orden
+        'orden': orden,
+        'segundos_transcurridos': round(segundos_transcurridos, 2),
     }
-    return render(request, 'tienda/detalle_orden.html', context)
+    return render(request, 'tienda/seguimiento_orden.html', context)
+
+@login_required
+def estado_orden_json(request, orden_id):
+    """
+    Endpoint ligero que sincroniza y devuelve el estado actual de la orden en JSON
+    cuando la barra de progreso llega a los 20 segundos.
+    """
+    cliente_obj = get_object_or_404(Cliente, usuario_login=request.user)
+    orden = get_object_or_404(OrdenEmpresarial, id=orden_id, cliente=cliente_obj)
+    _sincronizar_estado_orden(orden)
+
+    return JsonResponse({
+        'id': orden.id,
+        'estado': orden.estado,
+    })
 
 @login_required
 def historial_monedero(request):
